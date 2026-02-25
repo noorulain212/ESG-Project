@@ -82,7 +82,7 @@ export default function LandingPage() {
         </div>
 
         <h1 className="hero-title">
-          Welcome to
+          Welcome to 
           <span className="gradient-text"> ESG Calculator</span>
         </h1>
 
