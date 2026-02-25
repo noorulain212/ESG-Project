@@ -1,13 +1,33 @@
 // src/pages/ReportsPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReportsOverview from "../components/reports/ReportsOverview";
-import { FiFileText, FiDownload, FiCalendar, FiFilter, FiBarChart2 } from "react-icons/fi";
+import { FiFileText, FiDownload, FiCalendar, FiFilter, FiBarChart2, FiMapPin } from "react-icons/fi";
 import { BiLeaf } from "react-icons/bi";
 import Card from "../components/ui/Card";
+import { useEmissionStore } from "../store/emissionStore"; // Add this import
 
 export default function ReportsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedYear, setSelectedYear] = useState("2026");
+  const [selectedCity, setSelectedCity] = useState("all"); // Add city filter
+  const [cities, setCities] = useState([]);
+
+  // Get company data from store (you'll need to add this to your store)
+  // For now, using sample data from company setup
+  useEffect(() => {
+    // This should come from your store/context
+    // Example structure from company setup
+    const companyLocations = [
+      { id: 1, city: "Dubai", country: "UAE" },
+      { id: 2, city: "Abu Dhabi", country: "UAE" },
+      { id: 3, city: "Doha", country: "Qatar" },
+      { id: 4, city: "Riyadh", country: "Saudi Arabia" },
+    ];
+    
+    // Extract unique cities
+    const uniqueCities = ["all", ...new Set(companyLocations.map(loc => loc.city))];
+    setCities(uniqueCities);
+  }, []);
 
   return (
     <div className="reports-page">
@@ -33,6 +53,25 @@ export default function ReportsPage() {
       {/* Filters Bar */}
       <Card className="filters-card">
         <div className="filters-grid">
+          {/* City Filter - New */}
+          <div className="filter-group">
+            <label>
+              <FiMapPin className="filter-icon" />
+              City
+            </label>
+            <select 
+              value={selectedCity} 
+              onChange={(e) => setSelectedCity(e.target.value)}
+              className="filter-select"
+            >
+              {cities.map(city => (
+                <option key={city} value={city}>
+                  {city === 'all' ? 'All Cities' : city}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="filter-group">
             <label>
               <FiCalendar className="filter-icon" />
@@ -99,8 +138,8 @@ export default function ReportsPage() {
         </div>
       </Card>
 
-      {/* Reports Overview */}
-      <ReportsOverview />
+      {/* Reports Overview - Pass city filter as prop */}
+      <ReportsOverview selectedCity={selectedCity} />
 
       {/* Report Templates Section */}
       <Card className="templates-card">
@@ -215,7 +254,7 @@ export default function ReportsPage() {
 
         .filters-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr auto;
+          grid-template-columns: 1fr 1fr 1fr auto;
           gap: 16px;
           margin-bottom: 20px;
         }

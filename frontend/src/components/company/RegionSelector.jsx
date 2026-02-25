@@ -4,7 +4,7 @@ import { FiGlobe } from "react-icons/fi";
 
 export default function RegionSelector({ data, updateField }) {
   const regions = [
-    { label: "🇦🇪 United Arab Emirates (UAE)", value: "uae", flag: "🇦🇪" },
+    { label: "🌍 Middle East", value: "middle-east", flag: "🌍" },
     { label: "🇪🇺 Europe (EU)", value: "eu", flag: "🇪🇺" },
     { label: "🇬🇧 United Kingdom (UK)", value: "uk", flag: "🇬🇧" },
     { label: "🇺🇸 United States (US)", value: "us", flag: "🇺🇸" },
@@ -28,7 +28,12 @@ export default function RegionSelector({ data, updateField }) {
         <SelectDropdown
           label="Region"
           value={data.region}
-          onChange={(e) => updateField("region", e.target.value)}
+          onChange={(e) => {
+            updateField("region", e.target.value);
+            // Reset country and locations when region changes
+            updateField("country", "");
+            updateField("locations", []);
+          }}
           options={regions}
           placeholder="Choose your primary operating region"
           required

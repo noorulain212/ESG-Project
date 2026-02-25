@@ -7,6 +7,7 @@ import EmployeeForm from "./EmployeeForm";
 import RevenueForm from "./RevenueForm";
 import FacilitiesList from "./FacilitiesList";
 import SetupSummary from "./SetupSummary";
+import LocationManager from "./LocationManager";
 import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
 import Card from "../ui/Card";
@@ -16,14 +17,15 @@ import { BiLeaf } from "react-icons/bi";
 export default function CompanyWizard() {
   const [step, setStep] = useState(1);
   const [companyData, setCompanyData] = useState({
-    name: "",
-    description: "",
-    region: "",
-    industry: "",
-    employees: "",
-    revenue: "",
-    locations: [],
-  });
+  name: "",
+  description: "",
+  region: "",
+  country: "", // Add this
+  industry: "",
+  employees: "",
+  revenue: "",
+  locations: [],
+});
 
   const steps = [
     { id: 1, label: "Company Info", icon: "🏢" },
@@ -94,12 +96,12 @@ export default function CompanyWizard() {
           {step === 4 && <EmployeeForm data={companyData} updateField={updateField} />}
           {step === 5 && <RevenueForm data={companyData} updateField={updateField} />}
           {step === 6 && (
-            <FacilitiesList
-              locations={companyData.locations}
-              setLocations={(newList) => updateField("locations", newList)}
+            <LocationManager
+              data={companyData}
+              updateField={updateField}
             />
           )}
-          // In CompanyWizard.jsx, update step 7
+          
 {step === 7 && <SetupSummary data={companyData} updateField={updateField} />}
         </div>
 

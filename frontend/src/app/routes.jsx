@@ -14,7 +14,7 @@ import HelpPage from "../pages/HelpPage";
 import ForgotPassword from "../pages/ForgotPassword";
 import UserGuide from "../pages/UserGuide";
 import ContactPage from "../pages/ContactPage";
-
+import EmissionFactorsPage from "../pages/admin/EmissionFactorsPage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
@@ -85,6 +85,16 @@ export default function AppRoutes() {
       />
 
       <Route
+      path="/admin/factors"
+      element={
+        <AppLayout>
+          <EmissionFactorsPage />
+        </AppLayout>
+      }
+    />
+      
+
+      <Route
         path="/help"
         element={
           <AppLayout>
@@ -112,5 +122,9 @@ export default function AppRoutes() {
     
       />
     </Routes>
+
+    
   );
+
+  
 }

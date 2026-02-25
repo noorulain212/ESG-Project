@@ -17,7 +17,7 @@ export default function CompanyInfoForm({ data, updateField }) {
       <div className="form-fields">
         <div className="field-group">
           <InputField
-            label="Company Name"
+            label="Company Name "
             value={data.name}
             placeholder="e.g., Acme Corporation"
             onChange={(e) => updateField("name", e.target.value)}
@@ -29,7 +29,7 @@ export default function CompanyInfoForm({ data, updateField }) {
 
         <div className="field-group">
           <InputField
-            label="Company Description"
+            label="Company Description "
             value={data.description}
             placeholder="Brief description of your business activities"
             onChange={(e) => updateField("description", e.target.value)}

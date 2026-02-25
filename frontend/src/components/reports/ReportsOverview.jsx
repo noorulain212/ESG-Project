@@ -6,8 +6,9 @@ import ProgressBar from "../ui/ProgressBar";
 import { FiDownload, FiEye, FiMoreVertical, FiCalendar, FiTrendingUp } from "react-icons/fi";
 import { BiLeaf } from "react-icons/bi";
 
-export default function ReportsOverview() {
+export default function ReportsOverview({ selectedCity = "all" }) {
   const [expandedReport, setExpandedReport] = useState(null);
+  const [viewMode, setViewMode] = useState("list"); // "list" or "trend"
 
   // Sample data for demonstration - in real app, this would come from API
   const reports = [
@@ -25,6 +26,7 @@ export default function ReportsOverview() {
       trend: -5.2,
       dataPoints: 31,
       lastUpdated: "2026-02-01",
+      city: "Dubai",
     },
     {
       id: 2,
@@ -40,6 +42,7 @@ export default function ReportsOverview() {
       trend: 2.1,
       dataPoints: 92,
       lastUpdated: "2026-01-15",
+      city: "Abu Dhabi",
     },
     {
       id: 3,
@@ -55,8 +58,14 @@ export default function ReportsOverview() {
       trend: -8.4,
       dataPoints: 365,
       lastUpdated: "2026-01-10",
+      city: "Dubai",
     },
   ];
+
+  // Filter reports based on selected city
+  const filteredReports = selectedCity === "all" 
+    ? reports 
+    : reports.filter(report => report.city === selectedCity);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -72,135 +81,211 @@ export default function ReportsOverview() {
     <div className="reports-overview">
       {/* Section Header */}
       <div className="section-header">
-        <h2>Generated Reports</h2>
+        <h2>Generated Reports {selectedCity !== "all" && `- ${selectedCity}`}</h2>
         <div className="header-actions">
-          <button className="view-toggle">
-            <FiTrendingUp /> Trend View
+          <button 
+            className={`view-toggle ${viewMode === 'trend' ? 'active' : ''}`}
+            onClick={() => setViewMode(viewMode === 'list' ? 'trend' : 'list')}
+          >
+            <FiTrendingUp /> {viewMode === 'list' ? 'Trend View' : 'List View'}
           </button>
         </div>
       </div>
 
-      {/* Reports List */}
-      <div className="reports-list">
-        {reports.map((report) => (
-          <Card key={report.id} className="report-card">
-            {/* Card Header */}
-            <div className="report-header">
-              <div className="header-left">
-                <div className="report-icon">
-                  <BiLeaf />
-                </div>
-                <div>
-                  <h3>{report.title}</h3>
-                  <div className="report-meta">
-                    <span className="meta-item">
-                      <FiCalendar /> {report.period}
-                    </span>
-                    <span className="meta-divider">•</span>
-                    <span className="meta-item">
-                      {report.dataPoints} data points
-                    </span>
+      {/* Conditional Rendering based on viewMode */}
+      {viewMode === 'list' ? (
+        /* List View - Reports List */
+        <div className="reports-list">
+          {filteredReports.map((report) => (
+            <Card key={report.id} className="report-card">
+              {/* Card Header */}
+              <div className="report-header">
+                <div className="header-left">
+                  <div className="report-icon">
+                    <BiLeaf />
+                  </div>
+                  <div>
+                    <h3>{report.title}</h3>
+                    <div className="report-meta">
+                      <span className="meta-item">
+                        <FiCalendar /> {report.period}
+                      </span>
+                      <span className="meta-divider">•</span>
+                      <span className="meta-item">
+                        {report.dataPoints} data points
+                      </span>
+                      {report.city && (
+                        <>
+                          <span className="meta-divider">•</span>
+                          <span className="meta-item">
+                            📍 {report.city}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
+                
+                <div className="header-right">
+                  <StatusBadge status={report.status} className={getStatusColor(report.status)} />
+                  <button 
+                    className="expand-btn"
+                    onClick={() => setExpandedReport(expandedReport === report.id ? null : report.id)}
+                  >
+                    <FiMoreVertical />
+                  </button>
+                </div>
               </div>
-              
-              <div className="header-right">
-                <StatusBadge status={report.status} className={getStatusColor(report.status)} />
-                <button 
-                  className="expand-btn"
-                  onClick={() => setExpandedReport(expandedReport === report.id ? null : report.id)}
-                >
-                  <FiMoreVertical />
+
+              {/* Main Stats */}
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <span className="stat-label">Scope 1</span>
+                  <span className="stat-value">{report.scope1}</span>
+                  <span className="stat-unit">{report.unit}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">Scope 2</span>
+                  <span className="stat-value">{report.scope2}</span>
+                  <span className="stat-unit">{report.unit}</span>
+                </div>
+                <div className="stat-box highlight">
+                  <span className="stat-label">Total CO₂e</span>
+                  <span className="stat-value">{report.total}</span>
+                  <span className="stat-unit">{report.unit}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">vs Previous</span>
+                  <span className={`trend-value ${report.trend >= 0 ? 'up' : 'down'}`}>
+                    {report.trend > 0 ? '+' : ''}{report.trend}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="progress-section">
+                <div className="progress-header">
+                  <span className="progress-label">Data Completion</span>
+                  <span className="progress-value">{report.completion}%</span>
+                </div>
+                <ProgressBar value={report.completion} />
+                <div className="progress-footer">
+                  <span>Last updated: {report.lastUpdated}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="action-buttons">
+                <button className="action-btn view">
+                  <FiEye /> Preview
+                </button>
+                <button className="action-btn download">
+                  <FiDownload /> Download PDF
+                </button>
+                <button className="action-btn export">
+                  Export CSV
                 </button>
               </div>
-            </div>
 
-            {/* Main Stats */}
-            <div className="stats-grid">
-              <div className="stat-box">
-                <span className="stat-label">Scope 1</span>
-                <span className="stat-value">{report.scope1}</span>
-                <span className="stat-unit">{report.unit}</span>
-              </div>
-              <div className="stat-box">
-                <span className="stat-label">Scope 2</span>
-                <span className="stat-value">{report.scope2}</span>
-                <span className="stat-unit">{report.unit}</span>
-              </div>
-              <div className="stat-box highlight">
-                <span className="stat-label">Total CO₂e</span>
-                <span className="stat-value">{report.total}</span>
-                <span className="stat-unit">{report.unit}</span>
-              </div>
-              <div className="stat-box">
-                <span className="stat-label">vs Previous</span>
-                <span className={`trend-value ${report.trend >= 0 ? 'up' : 'down'}`}>
-                  {report.trend > 0 ? '+' : ''}{report.trend}%
-                </span>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="progress-section">
-              <div className="progress-header">
-                <span className="progress-label">Data Completion</span>
-                <span className="progress-value">{report.completion}%</span>
-              </div>
-              <ProgressBar value={report.completion} />
-              <div className="progress-footer">
-                <span>Last updated: {report.lastUpdated}</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="action-buttons">
-              <button className="action-btn view">
-                <FiEye /> Preview
-              </button>
-              <button className="action-btn download">
-                <FiDownload /> Download PDF
-              </button>
-              <button className="action-btn export">
-                Export CSV
-              </button>
-            </div>
-
-            {/* Expanded Details (shown when expanded) */}
-            {expandedReport === report.id && (
-              <div className="expanded-details">
-                <h4>Detailed Breakdown</h4>
-                <div className="details-grid">
-                  <div className="detail-item">
-                    <span>Mobile Combustion</span>
-                    <span>85 tCO₂e</span>
-                  </div>
-                  <div className="detail-item">
-                    <span>Stationary Combustion</span>
-                    <span>35 tCO₂e</span>
-                  </div>
-                  <div className="detail-item">
-                    <span>Electricity</span>
-                    <span>60 tCO₂e</span>
-                  </div>
-                  <div className="detail-item">
-                    <span>Heating</span>
-                    <span>20 tCO₂e</span>
+              {/* Expanded Details (shown when expanded) */}
+              {expandedReport === report.id && (
+                <div className="expanded-details">
+                  <h4>Detailed Breakdown</h4>
+                  <div className="details-grid">
+                    <div className="detail-item">
+                      <span>Mobile Combustion</span>
+                      <span>85 tCO₂e</span>
+                    </div>
+                    <div className="detail-item">
+                      <span>Stationary Combustion</span>
+                      <span>35 tCO₂e</span>
+                    </div>
+                    <div className="detail-item">
+                      <span>Electricity</span>
+                      <span>60 tCO₂e</span>
+                    </div>
+                    <div className="detail-item">
+                      <span>Heating</span>
+                      <span>20 tCO₂e</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
+              )}
+            </Card>
+          ))}
 
-      {/* Empty State (when no reports) */}
-      {reports.length === 0 && (
-        <Card className="empty-state">
-          <div className="empty-icon">📊</div>
-          <h3>No Reports Generated</h3>
-          <p>Generate your first report using the templates above</p>
-          <button className="generate-first-btn">Generate Report</button>
-        </Card>
+          {/* Empty State (when no reports) */}
+          {filteredReports.length === 0 && (
+            <Card className="empty-state">
+              <div className="empty-icon">📊</div>
+              <h3>No Reports Found</h3>
+              <p>{selectedCity === "all" ? "Generate your first report using the templates above" : `No reports available for ${selectedCity}`}</p>
+              <button className="generate-first-btn">Generate Report</button>
+            </Card>
+          )}
+        </div>
+      ) : (
+        /* Trend View */
+        <div className="trend-view">
+          <Card className="trend-card">
+            <h3>Emissions Trend Analysis</h3>
+            <p className="trend-subtitle">
+              {selectedCity !== "all" ? `Showing trends for ${selectedCity}` : "Showing trends for all cities"}
+            </p>
+            
+            {/* Placeholder Chart */}
+            <div className="trend-chart-placeholder">
+              <div className="chart-bars">
+                <div className="bar" style={{ height: '120px' }}></div>
+                <div className="bar" style={{ height: '180px' }}></div>
+                <div className="bar" style={{ height: '150px' }}></div>
+                <div className="bar" style={{ height: '200px' }}></div>
+                <div className="bar" style={{ height: '170px' }}></div>
+                <div className="bar" style={{ height: '220px' }}></div>
+                <div className="bar" style={{ height: '190px' }}></div>
+                <div className="bar" style={{ height: '210px' }}></div>
+                <div className="bar" style={{ height: '160px' }}></div>
+                <div className="bar" style={{ height: '140px' }}></div>
+                <div className="bar" style={{ height: '200px' }}></div>
+                <div className="bar" style={{ height: '180px' }}></div>
+              </div>
+              <div className="chart-labels">
+                <span>Jan</span>
+                <span>Feb</span>
+                <span>Mar</span>
+                <span>Apr</span>
+                <span>May</span>
+                <span>Jun</span>
+                <span>Jul</span>
+                <span>Aug</span>
+                <span>Sep</span>
+                <span>Oct</span>
+                <span>Nov</span>
+                <span>Dec</span>
+              </div>
+            </div>
+
+            <div className="trend-stats">
+              <div className="trend-stat-item">
+                <span className="trend-stat-label">Average Emissions</span>
+                <span className="trend-stat-value">184 tCO₂e</span>
+              </div>
+              <div className="trend-stat-item">
+                <span className="trend-stat-label">Peak Month</span>
+                <span className="trend-stat-value">June (220 tCO₂e)</span>
+              </div>
+              <div className="trend-stat-item">
+                <span className="trend-stat-label">Overall Trend</span>
+                <span className="trend-stat-value trend-down">↓ 8.2%</span>
+              </div>
+            </div>
+
+            <p className="trend-note">
+              📊 Interactive chart coming soon with detailed emission trends, 
+              scope breakdowns, and year-over-year comparisons.
+            </p>
+          </Card>
+        </div>
       )}
 
       <style jsx>{`
@@ -240,6 +325,12 @@ export default function ReportsOverview() {
         .view-toggle:hover {
           border-color: #22C55E;
           background: #F0FDF4;
+        }
+
+        .view-toggle.active {
+          background: #22C55E;
+          color: white;
+          border-color: #22C55E;
         }
 
         /* Reports List */
@@ -300,6 +391,7 @@ export default function ReportsOverview() {
           gap: 8px;
           font-size: 13px;
           color: #6B7280;
+          flex-wrap: wrap;
         }
 
         .meta-item {
@@ -536,6 +628,101 @@ export default function ReportsOverview() {
           cursor: pointer;
         }
 
+        /* Trend View Styles */
+        .trend-view {
+          margin-top: 20px;
+        }
+
+        .trend-card {
+          padding: 32px;
+          text-align: center;
+        }
+
+        .trend-card h3 {
+          font-size: 20px;
+          font-weight: 700;
+          color: #14532D;
+          margin: 0 0 8px;
+        }
+
+        .trend-subtitle {
+          color: #6B7280;
+          margin-bottom: 32px;
+        }
+
+        .trend-chart-placeholder {
+          margin: 32px 0;
+          padding: 20px;
+          background: #F9FAFB;
+          border-radius: 16px;
+        }
+
+        .chart-bars {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 8px;
+          height: 240px;
+          margin-bottom: 12px;
+        }
+
+        .bar {
+          flex: 1;
+          background: linear-gradient(180deg, #22C55E, #15803D);
+          border-radius: 8px 8px 0 0;
+          transition: height 0.3s ease;
+          min-width: 20px;
+        }
+
+        .chart-labels {
+          display: flex;
+          justify-content: space-between;
+          color: #6B7280;
+          font-size: 11px;
+        }
+
+        .trend-stats {
+          display: flex;
+          justify-content: space-around;
+          margin: 32px 0;
+          padding: 20px;
+          background: #F0FDF4;
+          border-radius: 16px;
+        }
+
+        .trend-stat-item {
+          text-align: center;
+        }
+
+        .trend-stat-label {
+          display: block;
+          font-size: 12px;
+          color: #6B7280;
+          margin-bottom: 4px;
+        }
+
+        .trend-stat-value {
+          display: block;
+          font-size: 18px;
+          font-weight: 700;
+          color: #14532D;
+        }
+
+        .trend-stat-value.trend-down {
+          color: #10B981;
+        }
+
+        .trend-note {
+          color: #6B7280;
+          font-size: 13px;
+          font-style: italic;
+          padding: 16px;
+          background: #F9FAFB;
+          border-radius: 12px;
+          border-left: 4px solid #22C55E;
+          text-align: left;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
           .stats-grid {
@@ -558,6 +745,15 @@ export default function ReportsOverview() {
 
           .details-grid {
             grid-template-columns: 1fr;
+          }
+
+          .trend-stats {
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .chart-labels {
+            font-size: 9px;
           }
         }
       `}</style>

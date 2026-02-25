@@ -101,6 +101,19 @@ export default function SetupSummary({ data, updateField }) {
     }).format(value);
   };
 
+  // helper function with other helper functions
+const getCountryLabel = (country) => {
+  const countries = {
+    uae: "UAE",
+    qatar: "Qatar",
+    saudi: "Saudi Arabia",
+    // Add more as needed
+  };
+  return countries[country] || country;
+};
+
+
+
   return (
     <div className="summary-step">
       <div className="step-header">
@@ -371,7 +384,8 @@ export default function SetupSummary({ data, updateField }) {
                   <div key={loc.id} className="facility-item">
                     <FiMapPin className="location-icon" />
                     <span>
-                      <strong>{loc.name}</strong> — {loc.city}, {loc.country}
+                      <strong>{loc.city}</strong>
+                      {loc.country && `, ${getCountryLabel(loc.country)}`}
                     </span>
                   </div>
                 ))
