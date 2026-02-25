@@ -94,7 +94,7 @@ export default function StationaryForm() {
             className="search-input"
           />
         </div>
-        <div className="filter-badge">
+        <div style = {{margin: "30px"}} className="filter-badge">
           {entries.length} entries
         </div>
       </div>

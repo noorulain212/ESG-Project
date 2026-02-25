@@ -152,7 +152,7 @@ export default function DashboardPage() {
               <div className="progress-track">
                 <div 
                   className="progress-fill"
-                  style={{ width: `${(reductionSoFar / targetReduction) * 100}%` }}
+                  style={{ width: "100%" }}
                 />
                 <div className="progress-marker" style={{ left: `${(reductionSoFar / targetReduction) * 100}%` }}>
                   <span className="marker-label">{reductionSoFar.toFixed(1)}%</span>

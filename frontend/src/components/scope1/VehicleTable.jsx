@@ -126,7 +126,8 @@ export default function VehicleTable() {
             className="search-input"
           />
         </div>
-        <div className="filter-badge">
+        <div className="filter-badge"
+        style = {{margin: "30px"}}>
           {vehicles.length} vehicles
         </div>
       </div>
