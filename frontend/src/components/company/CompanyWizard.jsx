@@ -17,24 +17,25 @@ import { BiLeaf } from "react-icons/bi";
 export default function CompanyWizard() {
   const [step, setStep] = useState(1);
   const [companyData, setCompanyData] = useState({
-  name: "",
-  description: "",
-  region: "",
-  country: "", // Add this
-  industry: "",
-  employees: "",
-  revenue: "",
-  locations: [],
-});
+    name: "",
+    description: "",
+    region: "",
+    country: "",
+    industry: "",
+    employees: "",
+    revenue: "",
+    locations: [],
+  });
 
   const steps = [
     { id: 1, label: "Company Info", icon: "🏢" },
     { id: 2, label: "Region", icon: "🌍" },
-    { id: 3, label: "Industry", icon: "🏭" },
-    { id: 4, label: "Employees", icon: "👥" },
-    { id: 5, label: "Revenue", icon: "💰" },
-    { id: 6, label: "Facilities", icon: "🏛️" },
-    { id: 7, label: "Summary", icon: "📋" },
+    { id: 3, label: "Country", icon: "🗺️" },
+    { id: 4, label: "Industry", icon: "🏭" },
+    { id: 5, label: "Employees", icon: "👥" },
+    { id: 6, label: "Revenue", icon: "💰" },
+    { id: 7, label: "Facilities", icon: "🏛️" },
+    { id: 8, label: "Summary", icon: "📋" },
   ];
 
   function updateField(field, value) {
@@ -54,11 +55,12 @@ export default function CompanyWizard() {
     switch(step) {
       case 1: return companyData.name.trim() !== "";
       case 2: return companyData.region !== "";
-      case 3: return companyData.industry !== "";
-      case 4: return companyData.employees !== "";
-      case 5: return companyData.revenue !== "";
-      case 6: return true; // Facilities are optional
-      case 7: return true; // Summary just shows data
+      case 3: return companyData.country !== "";
+      case 4: return companyData.industry !== "";
+      case 5: return companyData.employees !== "";
+      case 6: return companyData.revenue !== "";
+      case 7: return companyData.country !== "" && companyData.locations.length > 0; // Require at least one city
+      case 8: return true; // Summary just shows data
       default: return true;
     }
   };
@@ -92,17 +94,15 @@ export default function CompanyWizard() {
         <div className="wizard-content">
           {step === 1 && <CompanyInfoForm data={companyData} updateField={updateField} />}
           {step === 2 && <RegionSelector data={companyData} updateField={updateField} />}
-          {step === 3 && <IndustrySelector data={companyData} updateField={updateField} />}
-          {step === 4 && <EmployeeForm data={companyData} updateField={updateField} />}
-          {step === 5 && <RevenueForm data={companyData} updateField={updateField} />}
-          {step === 6 && (
-            <LocationManager
-              data={companyData}
-              updateField={updateField}
-            />
-          )}
-          
-{step === 7 && <SetupSummary data={companyData} updateField={updateField} />}
+          {step === 3 && <LocationManager data={companyData} updateField={updateField} />}
+          {step === 4 && <IndustrySelector data={companyData} updateField={updateField} />}
+          {step === 5 && <EmployeeForm data={companyData} updateField={updateField} />}
+          {step === 6 && <RevenueForm data={companyData} updateField={updateField} />}
+          {step === 7 && <FacilitiesList 
+            locations={companyData.locations} 
+            setLocations={(newList) => updateField("locations", newList)} 
+          />}
+          {step === 8 && <SetupSummary data={companyData} updateField={updateField} />}
         </div>
 
         {/* Navigation Buttons */}

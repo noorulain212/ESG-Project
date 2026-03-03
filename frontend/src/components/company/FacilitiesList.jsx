@@ -1,74 +1,10 @@
 // src/components/company/FacilitiesList.jsx
-import { useState } from "react";
-import { FiEdit2, FiTrash2, FiSave, FiX, FiPlus, FiMapPin } from "react-icons/fi";
+import { FiMapPin } from "react-icons/fi";
 import { BiBuilding } from "react-icons/bi";
 import Card from "../ui/Card";
-import InputField from "../ui/InputField";
-import PrimaryButton from "../ui/PrimaryButton";
-import SecondaryButton from "../ui/SecondaryButton";
 import EmptyState from "../ui/EmptyState";
 
-export default function FacilitiesList({ locations, setLocations }) {
-  // Form State (Add Facility)
-  const [facilityName, setFacilityName] = useState("");
-  const [facilityCity, setFacilityCity] = useState("");
-  const [facilityCountry, setFacilityCountry] = useState("");
-
-  // Edit State
-  const [editId, setEditId] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editCity, setEditCity] = useState("");
-  const [editCountry, setEditCountry] = useState("");
-
-  function handleAddFacility() {
-    if (!facilityName || !facilityCity || !facilityCountry) {
-      alert("Please fill all facility fields.");
-      return;
-    }
-
-    const newFacility = {
-      id: Date.now(),
-      name: facilityName,
-      city: facilityCity,
-      country: facilityCountry,
-    };
-
-    setLocations([...locations, newFacility]);
-    setFacilityName("");
-    setFacilityCity("");
-    setFacilityCountry("");
-  }
-
-  function startEdit(facility) {
-    setEditId(facility.id);
-    setEditName(facility.name);
-    setEditCity(facility.city);
-    setEditCountry(facility.country);
-  }
-
-  function cancelEdit() {
-    setEditId(null);
-    setEditName("");
-    setEditCity("");
-    setEditCountry("");
-  }
-
-  function handleSaveEdit() {
-    const updated = locations.map((f) =>
-      f.id === editId
-        ? { ...f, name: editName, city: editCity, country: editCountry }
-        : f
-    );
-    setLocations(updated);
-    cancelEdit();
-  }
-
-  function handleDelete(id) {
-    if (!window.confirm("Delete this facility?")) return;
-    const filtered = locations.filter((f) => f.id !== id);
-    setLocations(filtered);
-  }
-
+export default function FacilitiesList({ locations }) {
   return (
     <div className="facilities-step">
       <div className="step-header">
@@ -77,112 +13,56 @@ export default function FacilitiesList({ locations, setLocations }) {
       </div>
 
       <p className="step-description">
-        Add all physical locations, offices, and facilities owned or operated by your company.
+        Review the facilities and locations you've added for your company.
       </p>
 
-      {/* Add Facility Card */}
-      <Card className="add-facility-card">
-        <div className="card-header">
-          <BiBuilding className="header-icon" />
-          <h4>Add New Facility</h4>
-        </div>
-
-        <div className="add-form-grid">
-          <InputField
-            label="Facility Name"
-            value={facilityName}
-            placeholder="e.g. Headquarters"
-            onChange={(e) => setFacilityName(e.target.value)}
-          />
-          <InputField
-            label="City"
-            value={facilityCity}
-            placeholder="e.g. Dubai"
-            onChange={(e) => setFacilityCity(e.target.value)}
-          />
-          <InputField
-            label="Country"
-            value={facilityCountry}
-            placeholder="e.g. UAE"
-            onChange={(e) => setFacilityCountry(e.target.value)}
-          />
-        </div>
-
-        <PrimaryButton onClick={handleAddFacility} className="add-btn">
-          <FiPlus /> Add Facility
-        </PrimaryButton>
-      </Card>
-
-      {/* Facilities List */}
+      {/* Facilities List - Read Only Table */}
       <Card className="facilities-list-card">
         <div className="list-header">
-          <h4>Your Facilities</h4>
+          <div>
+            <h4>Your Facilities</h4>
+            <p className="list-subtitle">Summary of all registered locations</p>
+          </div>
           <span className="facility-count">{locations.length} {locations.length === 1 ? 'facility' : 'facilities'}</span>
         </div>
 
         {locations.length === 0 ? (
           <EmptyState 
             message="No facilities added yet" 
-            suggestion="Add your first facility using the form above"
+            suggestion="Go back to Step 3 to add cities"
           />
         ) : (
-          <div className="facilities-grid">
-            {locations.map((facility) => (
-              <div key={facility.id} className="facility-card">
-                {editId === facility.id ? (
-                  // Edit Mode
-                  <div className="edit-mode">
-                    <InputField
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Name"
-                      size="small"
-                    />
-                    <InputField
-                      value={editCity}
-                      onChange={(e) => setEditCity(e.target.value)}
-                      placeholder="City"
-                      size="small"
-                    />
-                    <InputField
-                      value={editCountry}
-                      onChange={(e) => setEditCountry(e.target.value)}
-                      placeholder="Country"
-                      size="small"
-                    />
-                    <div className="edit-actions">
-                      <PrimaryButton onClick={handleSaveEdit} className="save-btn">
-                        <FiSave /> Save
-                      </PrimaryButton>
-                      <SecondaryButton onClick={cancelEdit} className="cancel-btn">
-                        <FiX /> Cancel
-                      </SecondaryButton>
-                    </div>
-                  </div>
-                ) : (
-                  // View Mode
-                  <>
-                    <div className="facility-icon">
-                      <BiBuilding />
-                    </div>
-                    <div className="facility-details">
-                      <h5>{facility.name}</h5>
-                      <p>
-                        <FiMapPin /> {facility.city}, {facility.country}
-                      </p>
-                    </div>
-                    <div className="facility-actions">
-                      <button onClick={() => startEdit(facility)} className="icon-btn edit">
-                        <FiEdit2 />
-                      </button>
-                      <button onClick={() => handleDelete(facility.id)} className="icon-btn delete">
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+          <div className="table-wrapper">
+            <table className="facilities-table">
+              <thead>
+                <tr>
+                  <th>City</th>
+                  <th>Country</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {locations.map((loc, index) => (
+                  <tr key={loc.id} className={index % 2 === 0 ? 'even-row' : 'odd-row'}>
+                    <td>
+                      <div className="city-cell">
+                        <FiMapPin className="cell-icon" />
+                        <span className="city-name">{loc.city}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="country-badge">
+                        {loc.country === 'uae' ? 'UAE' : 
+                         loc.country === 'qatar' ? 'Qatar' : 'Saudi Arabia'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="status-badge active">Active</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Card>
@@ -222,201 +102,155 @@ export default function FacilitiesList({ locations, setLocations }) {
           line-height: 1.6;
         }
 
-        /* Add Facility Card */
-        .add-facility-card {
-          background: linear-gradient(135deg, #f0fdf4 0%, #e6f7e6 100%);
-          border: 1px solid rgba(34, 197, 94, 0.2);
-          margin-bottom: 24px;
-          padding: 24px;
-        }
-
-        .card-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-
-        .header-icon {
-          font-size: 24px;
-          color: #22C55E;
-        }
-
-        .card-header h4 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: #14532D;
-        }
-
-        .add-form-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          margin-bottom: 20px;
-        }
-
-        .add-btn {
-          width: 100%;
-          justify-content: center;
-          padding: 14px !important;
-        }
-
-        /* Facilities List */
+        /* Facilities List - Read Only Table */
         .facilities-list-card {
-          padding: 24px;
+          padding: 0;
           border: 1px solid rgba(34, 197, 94, 0.15);
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .list-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 20px;
+          padding: 20px 24px;
+          background: linear-gradient(135deg, #f8faf8 0%, #f0f9f0 100%);
+          border-bottom: 2px solid rgba(34, 197, 94, 0.2);
         }
 
         .list-header h4 {
-          margin: 0;
+          margin: 0 0 4px 0;
           font-size: 18px;
-          font-weight: 600;
+          font-weight: 700;
           color: #14532D;
         }
 
+        .list-subtitle {
+          margin: 0;
+          font-size: 13px;
+          color: #4B5563;
+        }
+
         .facility-count {
+          padding: 6px 16px;
+          background: white;
+          color: #15803D;
+          border-radius: 30px;
+          font-size: 13px;
+          font-weight: 600;
+          border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .table-wrapper {
+          overflow-x: auto;
+        }
+
+        .facilities-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 14px;
+        }
+
+        .facilities-table th {
+          text-align: left;
+          padding: 16px 20px;
+          background: white;
+          color: #374151;
+          font-weight: 600;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 2px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .facilities-table td {
+          padding: 16px 20px;
+          border-bottom: 1px solid #edf2f7;
+        }
+
+        .even-row {
+          background: white;
+        }
+
+        .odd-row {
+          background: #fafdfa;
+        }
+
+        .city-cell {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .cell-icon {
+          color: #22C55E;
+          font-size: 16px;
+        }
+
+        .city-name {
+          font-weight: 500;
+          color: #14532D;
+        }
+
+        .country-badge {
+          display: inline-block;
           padding: 4px 12px;
           background: #F0FDF4;
           color: #15803D;
           border-radius: 30px;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
         }
 
-        .facilities-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 16px;
+        .status-badge {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 30px;
+          font-size: 12px;
+          font-weight: 500;
         }
 
-        .facility-card {
-          background: white;
-          border: 1px solid rgba(34, 197, 94, 0.15);
-          border-radius: 16px;
-          padding: 16px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          transition: all 0.2s ease;
-          position: relative;
-        }
-
-        .facility-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(34, 197, 94, 0.15);
-          border-color: #22C55E;
-        }
-
-        .facility-icon {
-          width: 48px;
-          height: 48px;
-          background: linear-gradient(135deg, #22C55E20, #15803D20);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          color: #22C55E;
-        }
-
-        .facility-details {
-          flex: 1;
-        }
-
-        .facility-details h5 {
-          margin: 0 0 4px;
-          font-size: 16px;
-          font-weight: 600;
-          color: #14532D;
-        }
-
-        .facility-details p {
-          margin: 0;
-          font-size: 13px;
-          color: #6B7280;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .facility-actions {
-          display: flex;
-          gap: 6px;
-        }
-
-        .icon-btn {
-          width: 32px;
-          height: 32px;
-          border: none;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          background: transparent;
-        }
-
-        .icon-btn.edit {
-          color: #3B82F6;
-        }
-
-        .icon-btn.edit:hover {
-          background: #DBEAFE;
-        }
-
-        .icon-btn.delete {
-          color: #EF4444;
-        }
-
-        .icon-btn.delete:hover {
-          background: #FEE2E2;
-        }
-
-        /* Edit Mode */
-        .edit-mode {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .edit-actions {
-          display: flex;
-          gap: 8px;
-          margin-top: 8px;
-        }
-
-        .save-btn, .cancel-btn {
-          flex: 1;
-          padding: 8px !important;
-          font-size: 13px !important;
+        .status-badge.active {
+          background: #E6F7E6;
+          color: #15803D;
+          border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
         @media (max-width: 768px) {
-          .add-form-grid {
-            grid-template-columns: 1fr;
+          .facilities-table {
+            border: 0;
           }
 
-          .facilities-grid {
-            grid-template-columns: 1fr;
+          .facilities-table thead {
+            display: none;
           }
 
-          .facility-card {
-            flex-wrap: wrap;
+          .facilities-table tr {
+            display: block;
+            margin-bottom: 16px;
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 8px;
           }
 
-          .facility-actions {
-            width: 100%;
-            justify-content: flex-end;
+          .facilities-table td {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #E5E7EB;
+          }
+
+          .facilities-table td:last-child {
+            border-bottom: none;
+          }
+
+          .facilities-table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #6B7280;
+            width: 100px;
+            font-size: 12px;
           }
         }
       `}</style>

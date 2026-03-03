@@ -3,75 +3,71 @@ import Card from "../ui/Card";
 import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
 import EmptyState from "../ui/EmptyState";
-import SelectDropdown from "../ui/SelectDropdown";
 import { useEmissionStore } from "../../store/emissionStore";
+import { FiSearch, FiPlus, FiTrash2, FiAlertCircle, FiDroplet } from "react-icons/fi";
 
-export default function RefrigerantForm() {
-  const refrigerants = useEmissionStore((s) => s.scope1Refrigerants);
-  const addRefrigerant = useEmissionStore((s) => s.addScope1Refrigerant);
-  const deleteRefrigerant = useEmissionStore((s) => s.deleteScope1Refrigerant);
+export default function FugitiveForm() {
+  const fugitiveEntries = useEmissionStore((s) => s.scope1Fugitive);
+  const addFugitive = useEmissionStore((s) => s.addScope1Fugitive);
+  const deleteFugitive = useEmissionStore((s) => s.deleteScope1Fugitive);
 
-  const [refrigerantType, setRefrigerantType] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [source, setSource] = useState("");
+  const [amount, setAmount] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const refrigerantOptions = [
-    { label: "R-134a", value: "R-134a", gwp: 1430 },
-    { label: "R-410A", value: "R-410A", gwp: 2088 },
-    { label: "R-22", value: "R-22", gwp: 1810 },
-    { label: "R-404A", value: "R-404A", gwp: 3922 },
-    { label: "R-407C", value: "R-407C", gwp: 1774 },
-    { label: "R-32", value: "R-32", gwp: 675 },
-    { label: "R-123", value: "R-123", gwp: 77 },
-    { label: "R-245fa", value: "R-245fa", gwp: 1030 },
-    { label: "R-717 (Ammonia)", value: "Ammonia", gwp: 0 },
-    { label: "R-744 (CO2)", value: "CO2", gwp: 1 },
+  const sourceOptions = [
+    "Pipeline Leaks",
+    "Valve Leaks",
+    "Flange Leaks",
+    "Compressor Seals",
+    "Storage Tanks",
+    "Pressure Relief Devices",
+    "Open-ended Lines",
+    "Sampling Connections",
+    "Wastewater Treatment",
+    "Cooling Towers",
+    "Coal Mining",
+    "Oil & Gas Extraction",
+    "Landfills",
+    "Other"
   ];
 
   const handleAdd = () => {
-    if (!refrigerantType || !quantity) {
+    if (!source || !amount) {
       alert("Enter all fields");
       return;
     }
-    addRefrigerant({
+    addFugitive({
       id: Date.now(),
-      refrigerantType,
-      gwp: Number(quantity),
+      source,
+      amount: Number(amount),
     });
-    setRefrigerantType("");
-    setQuantity("");
+    setSource("");
+    setAmount("");
   };
 
-  const handleDelete = (id) => deleteRefrigerant(id);
+  const handleDelete = (id) => deleteFugitive(id);
 
-  // Filtered display
   const displayedEntries = useMemo(() => {
-    if (!searchTerm) return refrigerants;
-    return refrigerants.filter(
-      r =>
-        r.refrigerantType.toLowerCase().includes(searchTerm.toLowerCase())
+    if (!searchTerm) return fugitiveEntries;
+    return fugitiveEntries.filter(f =>
+      f.source.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [refrigerants, searchTerm]);
+  }, [fugitiveEntries, searchTerm]);
 
-  const totalGWP = refrigerants.reduce((sum, r) => sum + r.gwp, 0);
-  const totalCO2e = totalGWP * 0.001; // Convert kg to tonnes, adjust factor as needed
-
-  // Get GWP factor for selected refrigerant
-  const getSelectedGWP = () => {
-    const selected = refrigerantOptions.find(opt => opt.value === refrigerantType);
-    return selected ? selected.gwp : 0;
-  };
+  const totalAmount = fugitiveEntries.reduce((sum, f) => sum + f.amount, 0);
+  const totalCO2e = totalAmount * 1.1;
 
   return (
-    <div className="refrigerant-container">
+    <div className="fugitive-container">
       {/* Header with description */}
       <div className="section-description">
-        <div className="description-icon">❄️</div>
+        <div className="description-icon">💨</div>
         <div className="description-content">
-          <h3>Refrigerant Management</h3>
+          <h3>Fugitive Emissions</h3>
           <p>
-            Track <span className="highlight">refrigerant usage and leaks</span> from cooling equipment. 
-            Refrigerants have high global warming potential (GWP) and must be reported accurately.
+            Track <span className="highlight">unintentional leaks and releases</span> from equipment, 
+            pipelines, valves, and other industrial sources.
           </p>
         </div>
       </div>
@@ -79,85 +75,96 @@ export default function RefrigerantForm() {
       {/* Search and Filter Bar */}
       <div className="search-filter-bar">
         <div className="search-box">
-          <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#6B7280" strokeWidth="2"/>
-            <path d="M19 19L15 15" stroke="#6B7280" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <FiSearch className="search-icon" size={20} />
           <input
             type="text"
-            placeholder="Search refrigerants..."
+            placeholder="Search emission sources..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
         </div>
         <div className="filter-badge">
-          {refrigerants.length} entries
+          {fugitiveEntries.length} {fugitiveEntries.length === 1 ? 'source' : 'sources'}
         </div>
       </div>
 
-      {/* Add Refrigerant Form Card */}
-      <Card className="add-refrigerant-card">
+      {/* Add Fugitive Form Card */}
+      <Card className="add-fugitive-card">
         <div className="card-header-compact">
-          <h4>Add Refrigerant Entry</h4>
-          <p>Select refrigerant type and enter quantity (kg)</p>
+          <h4>Add Fugitive Emission Source</h4>
+          <p>Enter source details and estimated amount</p>
         </div>
         
-        <div className="add-refrigerant-form">
+        <div className="add-fugitive-form">
           <div className="form-row">
-            <div className="form-group refrigerant-select">
-              <label className="form-label">Refrigerant Type</label>
-              <select
-                value={refrigerantType}
-                onChange={(e) => setRefrigerantType(e.target.value)}
-                className="refrigerant-select"
-              >
-                <option value="">Select refrigerant type</option>
-                {refrigerantOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label} (GWP: {opt.gwp})
-                  </option>
-                ))}
-              </select>
-              {refrigerantType && (
-                <div className="gwp-indicator">
-                  <span className="gwp-label">GWP Factor:</span>
-                  <span className="gwp-value">{getSelectedGWP()}</span>
-                </div>
-              )}
+            <div className="form-group">
+              <label className="form-label">Emission Source</label>
+              <div className="select-wrapper">
+                <FiAlertCircle className="select-icon" />
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="source-select"
+                >
+                  <option value="">Select emission source</option>
+                  {sourceOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="form-group quantity-input">
-              <label className="form-label">Quantity (kg)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Enter quantity in kg"
-                className="quantity-field"
-              />
+            <div className="form-group">
+              <label className="form-label">Amount (kg CH₄/CO₂e)</label>
+              <div className="input-wrapper">
+                <FiDroplet className="input-icon" />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter estimated amount"
+                  className="clean-input"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Preview calculation if both fields are filled */}
-          {refrigerantType && quantity && Number(quantity) > 0 && (
+          {/* Source category hint */}
+          {source && (
+            <div className="source-hint">
+              <span className="hint-icon">ℹ️</span>
+              <span className="hint-text">
+                {source === "Landfills" && "Methane from decomposing organic waste"}
+                {source === "Coal Mining" && "Fugitive methane from mining operations"}
+                {source === "Oil & Gas Extraction" && "Leaks during extraction and processing"}
+                {source === "Pipeline Leaks" && "Natural gas leaks from transmission pipelines"}
+                {(source === "Valve Leaks" || source === "Flange Leaks") && "Common sources in industrial facilities"}
+                {![
+                  "Landfills", "Coal Mining", "Oil & Gas Extraction", 
+                  "Pipeline Leaks", "Valve Leaks", "Flange Leaks"
+                ].includes(source) && "Enter estimated fugitive emissions"}
+              </span>
+            </div>
+          )}
+
+          {/* Preview calculation if amount is filled */}
+          {amount && Number(amount) > 0 && (
             <div className="preview-calculation">
               <span className="preview-label">Estimated CO₂e:</span>
               <span className="preview-value">
-                {(Number(quantity) * getSelectedGWP() / 1000).toFixed(3)} tCO₂e
+                {(Number(amount) * 1.1).toFixed(2)} tCO₂e
               </span>
+              <span className="preview-note">(using default factor 1.1)</span>
             </div>
           )}
 
           {/* Submit Button */}
           <div className="form-actions">
             <PrimaryButton onClick={handleAdd} className="submit-btn">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 4V16M4 10H16" stroke="white" strokeWidth="2"/>
-              </svg>
-              Add Refrigerant Entry
+              <FiPlus size={20} /> Add Fugitive Source
             </PrimaryButton>
           </div>
         </div>
@@ -166,8 +173,8 @@ export default function RefrigerantForm() {
       {/* Entries Table */}
       {displayedEntries.length === 0 ? (
         <EmptyState 
-          message="No refrigerant entries added yet" 
-          icon="❄️"
+          message="No fugitive emission sources added yet" 
+          icon="💨"
           className="empty-state-custom"
         />
       ) : (
@@ -176,27 +183,22 @@ export default function RefrigerantForm() {
             <table className="entries-table">
               <thead>
                 <tr>
-                  <th style={{ width: '25%' }}>Refrigerant Type</th>
-                  <th style={{ width: '15%' }}>Quantity (kg)</th>
-                  <th style={{ width: '15%' }}>GWP Factor</th>
-                  <th style={{ width: '20%' }}>CO₂e (t)</th>
-                  <th style={{ width: '25%' }}>Actions</th>
+                  <th>Emission Source</th>
+                  <th>Amount (kg)</th>
+                  <th>CO₂e (t)</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {displayedEntries.map(r => {
-                  const gwpFactor = refrigerantOptions.find(opt => opt.value === r.refrigerantType)?.gwp || 1000;
-                  const co2e = (r.gwp * gwpFactor / 1000).toFixed(3);
+                {displayedEntries.map(f => {
+                  const co2e = (f.amount * 1.1).toFixed(2);
                   
                   return (
-                    <tr key={r.id} className="entry-row">
+                    <tr key={f.id} className="entry-row">
                       <td>
-                        <span className="refrigerant-badge">{r.refrigerantType}</span>
+                        <span className="source-badge">{f.source}</span>
                       </td>
-                      <td className="number-cell">{r.gwp.toLocaleString()}</td>
-                      <td>
-                        <span className="gwp-badge">{gwpFactor}</span>
-                      </td>
+                      <td className="number-cell">{f.amount.toLocaleString()}</td>
                       <td>
                         <span className="co2e-indicator">{co2e}</span>
                       </td>
@@ -208,13 +210,11 @@ export default function RefrigerantForm() {
                           Edit
                         </SecondaryButton>
                         <button 
-                          onClick={() => handleDelete(r.id)} 
+                          onClick={() => handleDelete(f.id)} 
                           className="delete-btn"
                           title="Delete"
                         >
-                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                            <path d="M3 3L15 15M15 3L3 15" stroke="currentColor" strokeWidth="2"/>
-                          </svg>
+                          <FiTrash2 size={16} />
                         </button>
                       </td>
                     </tr>
@@ -230,12 +230,12 @@ export default function RefrigerantForm() {
       <Card className="summary-footer">
         <div className="summary-grid">
           <div className="summary-item">
-            <span className="summary-label">Total Refrigerant</span>
-            <span className="summary-value">{refrigerants.length} entries</span>
+            <span className="summary-label">Total Sources</span>
+            <span className="summary-value">{fugitiveEntries.length}</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">Total Quantity</span>
-            <span className="summary-value">{totalGWP.toLocaleString()} kg</span>
+            <span className="summary-label">Total Amount</span>
+            <span className="summary-value">{totalAmount.toLocaleString()} kg</span>
           </div>
           <div className="summary-item highlight">
             <span className="summary-label">Total CO₂e</span>
@@ -245,13 +245,13 @@ export default function RefrigerantForm() {
           </div>
         </div>
         <div className="footer-note">
-          <p>🌱 Based on IPCC AR5 GWP values for refrigerants</p>
-          <p className="footnote">*CO₂e calculated using refrigerant-specific GWP factors</p>
+          <p>🌱 Based on IPCC default emission factors for fugitive sources</p>
+          <p className="footnote">*Fugitive emissions include methane (CH₄) and other greenhouse gases</p>
         </div>
       </Card>
 
       <style jsx>{`
-        .refrigerant-container {
+        .fugitive-container {
           width: 100%;
           max-width: 1400px;
           margin: 0 auto;
@@ -327,6 +327,7 @@ export default function RefrigerantForm() {
 
         .search-icon {
           flex-shrink: 0;
+          color: #9CA3AF;
         }
 
         .search-input {
@@ -338,7 +339,7 @@ export default function RefrigerantForm() {
         }
 
         .filter-badge {
-          padding: 8px 16px;
+          padding: 8px 20px;
           background: #2E7D32;
           color: white;
           border-radius: 30px;
@@ -347,10 +348,12 @@ export default function RefrigerantForm() {
           white-space: nowrap;
         }
 
-        /* Add Refrigerant Card */
-        .add-refrigerant-card {
+        /* Add Fugitive Card */
+        .add-fugitive-card {
           margin-bottom: 24px;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
+          overflow: hidden;
         }
 
         .card-header-compact {
@@ -372,15 +375,15 @@ export default function RefrigerantForm() {
           color: #6B7280;
         }
 
-        .add-refrigerant-form {
+        .add-fugitive-form {
           padding: 24px;
         }
 
         .form-row {
           display: grid;
-          grid-template-columns: 2fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 20px;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
         }
 
         .form-group {
@@ -393,66 +396,121 @@ export default function RefrigerantForm() {
           font-size: 14px;
           font-weight: 600;
           color: #374151;
+          margin-bottom: 4px;
         }
 
-        .refrigerant-select {
-          width: 100%;
-          padding: 12px 16px;
-          border: 2px solid #e5e7eb;
-          border-radius: 12px;
-          font-size: 14px;
+        /* Select Wrapper */
+        .select-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 12px;
           background: white;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
           transition: all 0.2s ease;
-          outline: none;
+          height: 45px;
         }
 
-        .refrigerant-select:focus {
+        .select-wrapper:focus-within {
           border-color: #2E7D32;
           box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
         }
 
-        .gwp-indicator {
+        .select-icon {
+          color: #9CA3AF;
+          font-size: 16px;
+        }
+
+        .source-select {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 14px;
+          background: transparent;
+          color: #1F2937;
+          height: 100%;
+          cursor: pointer;
+        }
+
+        /* Input Wrapper */
+        .input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 16px;
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          transition: all 0.2s ease;
+          height: 45px;
+        }
+
+        .input-wrapper:focus-within {
+          border-color: #2E7D32;
+          box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        }
+
+        .input-icon {
+          color: #9CA3AF;
+          font-size: 16px;
+        }
+
+        .clean-input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 14px;
+          background: transparent;
+          color: #1F2937;
+          height: 100%;
+        }
+
+        .clean-input::placeholder {
+          color: #9CA3AF;
+        }
+
+        .clean-input[type="number"] {
+          -moz-appearance: textfield;
+        }
+
+        .clean-input[type="number"]::-webkit-outer-spin-button,
+        .clean-input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .source-hint {
+          padding: 12px 16px;
+          background: #f0f9f0;
+          border-radius: 12px;
+          margin: 20px 0;
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 12px;
-          background: #f0f9f0;
-          border-radius: 10px;
           font-size: 13px;
+          color: #374151;
+          border-left: 3px solid #2E7D32;
         }
 
-        .gwp-label {
-          color: #4B5563;
+        .hint-icon {
+          font-size: 16px;
         }
 
-        .gwp-value {
-          font-weight: 700;
-          color: #2E7D32;
-        }
-
-        .quantity-field {
-          width: 100%;
-          padding: 12px 16px;
-          border: 2px solid #e5e7eb;
-          border-radius: 12px;
-          font-size: 14px;
-          transition: all 0.2s ease;
-          outline: none;
-        }
-
-        .quantity-field:focus {
-          border-color: #2E7D32;
-          box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        .hint-text {
+          line-height: 1.5;
         }
 
         .preview-calculation {
-          padding: 16px;
+          padding: 16px 20px;
           background: #f0f9f0;
           border-radius: 12px;
-          margin-bottom: 20px;
+          margin: 20px 0;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+          border: 1px solid rgba(46, 125, 50, 0.2);
         }
 
         .preview-label {
@@ -467,13 +525,25 @@ export default function RefrigerantForm() {
           color: #2E7D32;
         }
 
+        .preview-note {
+          font-size: 12px;
+          color: #6B7280;
+        }
+
         .form-actions {
           display: flex;
           justify-content: flex-end;
+          margin-top: 16px;
         }
 
         .submit-btn {
           min-width: 220px;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 8px !important;
+          padding: 12px 24px !important;
+          border-radius: 30px !important;
         }
 
         /* Table Card */
@@ -481,6 +551,7 @@ export default function RefrigerantForm() {
           margin-bottom: 24px;
           overflow: hidden;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
         }
 
         .table-wrapper {
@@ -493,26 +564,23 @@ export default function RefrigerantForm() {
           border-collapse: separate;
           border-spacing: 0 8px;
           padding: 8px;
-          table-layout: fixed;
         }
 
         .entries-table th {
           text-align: left;
-          padding: 16px 12px;
+          padding: 16px 20px;
           background: #f8faf8;
           font-size: 13px;
           font-weight: 600;
           color: #4B5563;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          white-space: nowrap;
         }
 
         .entries-table td {
-          padding: 16px 12px;
+          padding: 16px 20px;
           background: white;
           border-bottom: 1px solid #f0f0f0;
-          word-break: break-word;
         }
 
         .entry-row {
@@ -525,27 +593,14 @@ export default function RefrigerantForm() {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        .refrigerant-badge {
+        .source-badge {
           display: inline-block;
-          padding: 4px 10px;
+          padding: 4px 12px;
           background: #e0f2fe;
           color: #0369a1;
           border-radius: 30px;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 500;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .gwp-badge {
-          display: inline-block;
-          padding: 4px 8px;
-          background: #f3f4f6;
-          border-radius: 12px;
-          font-size: 12px;
-          color: #4B5563;
         }
 
         .co2e-indicator {
@@ -557,24 +612,22 @@ export default function RefrigerantForm() {
         .number-cell {
           font-family: 'Inter', monospace;
           font-weight: 500;
-          font-size: 14px;
         }
 
         .actions-cell {
           display: flex;
           gap: 8px;
           align-items: center;
-          flex-wrap: wrap;
         }
 
         .edit-btn {
-          padding: 6px 12px !important;
-          font-size: 12px !important;
-          min-width: 60px;
+          padding: 6px 16px !important;
+          font-size: 13px !important;
+          border-radius: 30px !important;
         }
 
         .delete-btn {
-          padding: 6px;
+          padding: 8px;
           background: white;
           border: 1px solid #fee2e2;
           border-radius: 8px;
@@ -584,8 +637,8 @@ export default function RefrigerantForm() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
         }
 
         .delete-btn:hover {
@@ -599,6 +652,7 @@ export default function RefrigerantForm() {
           padding: 0;
           overflow: hidden;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
         }
 
         .summary-grid {
@@ -669,7 +723,7 @@ export default function RefrigerantForm() {
 
         /* Responsive */
         @media (max-width: 768px) {
-          .refrigerant-container {
+          .fugitive-container {
             padding: 12px;
           }
 
@@ -681,14 +735,6 @@ export default function RefrigerantForm() {
           .form-row {
             grid-template-columns: 1fr;
             gap: 16px;
-          }
-
-          .entries-table {
-            table-layout: auto;
-          }
-          
-          .entries-table th {
-            white-space: normal;
           }
 
           .summary-grid {
@@ -724,7 +770,6 @@ export default function RefrigerantForm() {
           .preview-calculation {
             flex-direction: column;
             align-items: flex-start;
-            gap: 8px;
           }
         }
       `}</style>

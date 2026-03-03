@@ -5,6 +5,7 @@ import SecondaryButton from "../ui/SecondaryButton";
 import InputField from "../ui/InputField";
 import EmptyState from "../ui/EmptyState";
 import { useEmissionStore } from "../../store/emissionStore";
+import { FiSearch, FiPlus, FiTrash2, FiHash, FiMapPin, FiDroplet } from "react-icons/fi";
 
 export default function VehicleTable() {
   const vehicles = useEmissionStore((s) => s.scope1Vehicles);
@@ -88,13 +89,13 @@ export default function VehicleTable() {
   // Get fuel badge color
   const getFuelBadgeClass = (fuel) => {
     const fuelMap = {
-      'Diesel': 'bg-amber-100 text-amber-800 border-amber-200',
-      'Petrol': 'bg-blue-100 text-blue-800 border-blue-200',
-      'LPG': 'bg-purple-100 text-purple-800 border-purple-200',
-      'Biodiesel': 'bg-green-100 text-green-800 border-green-200',
-      'Other': 'bg-gray-100 text-gray-800 border-gray-200'
+      'Diesel': 'bg-amber-50 text-amber-700 border-amber-200',
+      'Petrol': 'bg-blue-50 text-blue-700 border-blue-200',
+      'LPG': 'bg-purple-50 text-purple-700 border-purple-200',
+      'Biodiesel': 'bg-green-50 text-green-700 border-green-200',
+      'Other': 'bg-gray-50 text-gray-700 border-gray-200'
     };
-    return fuelMap[fuel] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return fuelMap[fuel] || 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
   return (
@@ -114,10 +115,7 @@ export default function VehicleTable() {
       {/* Search and Filter Bar */}
       <div className="search-filter-bar">
         <div className="search-box">
-          <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#6B7280" strokeWidth="2"/>
-            <path d="M19 19L15 15" stroke="#6B7280" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <FiSearch className="search-icon" size={20} />
           <input
             type="text"
             placeholder="Search vehicles, fuel type or registration..."
@@ -126,9 +124,8 @@ export default function VehicleTable() {
             className="search-input"
           />
         </div>
-        <div className="filter-badge"
-        style = {{margin: "30px"}}>
-          {vehicles.length} vehicles
+        <div  style = {{margin: "30px"}}className="filter-badge">
+          {vehicles.length} {vehicles.length === 1 ? 'vehicle' : 'vehicles'}
         </div>
       </div>
 
@@ -158,35 +155,42 @@ export default function VehicleTable() {
               {fuelOptions.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
 
-            <InputField
-              placeholder="Registration Number"
-              value={registration}
-              onChange={(e) => setRegistration(e.target.value)}
-              className="form-input"
-            />
+            <div className="input-wrapper">
+              <FiHash className="input-icon" />
+              <input
+                type="text"
+                placeholder="Registration Number"
+                value={registration}
+                onChange={(e) => setRegistration(e.target.value)}
+                className="clean-input"
+              />
+            </div>
 
-            <InputField
-              placeholder="Distance (km)"
-              type="number"
-              value={km}
-              onChange={(e) => setKm(e.target.value)}
-              className="form-input"
-            />
+            <div className="input-wrapper">
+              <FiMapPin className="input-icon" />
+              <input
+                type="number"
+                placeholder="Distance (km)"
+                value={km}
+                onChange={(e) => setKm(e.target.value)}
+                className="clean-input"
+              />
+            </div>
 
-            <InputField
-              placeholder="Fuel (litres)"
-              type="number"
-              value={litres}
-              onChange={(e) => setLitres(e.target.value)}
-              className="form-input"
-            />
+            <div className="input-wrapper">
+              <FiDroplet className="input-icon" />
+              <input
+                type="number"
+                placeholder="Fuel (litres)"
+                value={litres}
+                onChange={(e) => setLitres(e.target.value)}
+                className="clean-input"
+              />
+            </div>
           </div>
           
           <PrimaryButton onClick={handleAdd} className="add-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 4V16M4 10H16" stroke="white" strokeWidth="2"/>
-            </svg>
-            Add Vehicle
+            <FiPlus size={20} /> Add Vehicle
           </PrimaryButton>
         </div>
       </Card>
@@ -245,58 +249,73 @@ export default function VehicleTable() {
                     </td>
                     <td>
                       {editId === v.id ? (
-                        <InputField 
-                          value={editRegistration} 
-                          onChange={e => setEditRegistration(e.target.value)} 
-                          className="edit-input" 
-                        />
+                        <div className="edit-input-wrapper">
+                          <FiHash className="edit-input-icon" />
+                          <input 
+                            type="text"
+                            value={editRegistration} 
+                            onChange={e => setEditRegistration(e.target.value)} 
+                            className="edit-input-field"
+                          />
+                        </div>
                       ) : (
-                        v.registration
+                        <span className="registration-text">{v.registration}</span>
                       )}
                     </td>
                     <td className="number-cell">
                       {editId === v.id ? (
-                        <InputField 
-                          type="number" 
-                          value={editKm} 
-                          onChange={e => setEditKm(e.target.value)} 
-                          className="edit-input" 
-                        />
+                        <div className="edit-input-wrapper">
+                          <FiMapPin className="edit-input-icon" />
+                          <input 
+                            type="number" 
+                            value={editKm} 
+                            onChange={e => setEditKm(e.target.value)} 
+                            className="edit-input-field"
+                          />
+                        </div>
                       ) : (
                         v.km.toLocaleString()
                       )}
                     </td>
                     <td className="number-cell">
                       {editId === v.id ? (
-                        <InputField 
-                          type="number" 
-                          value={editLitres} 
-                          onChange={e => setEditLitres(e.target.value)} 
-                          className="edit-input" 
-                        />
+                        <div className="edit-input-wrapper">
+                          <FiDroplet className="edit-input-icon" />
+                          <input 
+                            type="number" 
+                            value={editLitres} 
+                            onChange={e => setEditLitres(e.target.value)} 
+                            className="edit-input-field"
+                          />
+                        </div>
                       ) : (
                         v.litres.toLocaleString()
                       )}
                     </td>
                     <td className="actions-cell">
                       {editId === v.id ? (
-                        <PrimaryButton onClick={handleUpdate} className="save-btn">
-                          Save
-                        </PrimaryButton>
+                        <div className="edit-actions">
+                          <PrimaryButton onClick={handleUpdate} className="save-btn">
+                            Save
+                          </PrimaryButton>
+                          <SecondaryButton onClick={() => setEditId(null)} className="cancel-btn">
+                            Cancel
+                          </SecondaryButton>
+                        </div>
                       ) : (
-                        <SecondaryButton onClick={() => startEdit(v)} className="edit-btn">
-                          Edit
-                        </SecondaryButton>
+                        <>
+                          <SecondaryButton onClick={() => startEdit(v)} className="edit-btn">
+                            Edit
+                          </SecondaryButton>
+                          <button 
+                            onClick={() => handleDelete(v.id)} 
+                            className="delete-btn"
+                            title="Delete"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </>
                       )}
-                      <button 
-                        onClick={() => handleDelete(v.id)} 
-                        className="delete-btn"
-                        title="Delete"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                          <path d="M3 3L15 15M15 3L3 15" stroke="currentColor" strokeWidth="2"/>
-                        </svg>
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -377,7 +396,7 @@ export default function VehicleTable() {
           color: #2E7D32;
         }
 
-        /* Search Bar */
+        /* Search Bar - Reference Style */
         .search-filter-bar {
           display: flex;
           justify-content: space-between;
@@ -406,6 +425,7 @@ export default function VehicleTable() {
 
         .search-icon {
           flex-shrink: 0;
+          color: #9CA3AF;
         }
 
         .search-input {
@@ -417,7 +437,7 @@ export default function VehicleTable() {
         }
 
         .filter-badge {
-          padding: 8px 16px;
+          padding: 8px 20px;
           background: #2E7D32;
           color: white;
           border-radius: 30px;
@@ -430,6 +450,8 @@ export default function VehicleTable() {
         .add-vehicle-card {
           margin-bottom: 24px;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
+          overflow: hidden;
         }
 
         .card-header-compact {
@@ -465,12 +487,13 @@ export default function VehicleTable() {
         .form-select {
           width: 100%;
           padding: 12px 16px;
-          border: 2px solid #e5e7eb;
+          border: 1px solid #e5e7eb;
           border-radius: 12px;
           font-size: 14px;
           background: white;
           transition: all 0.2s ease;
           outline: none;
+          color: #1F2937;
         }
 
         .form-select:focus {
@@ -478,14 +501,93 @@ export default function VehicleTable() {
           box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
         }
 
-        .form-input {
-          width: 100%;
+        /* Clean Input Style (Matching Search Bar) */
+        .input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 16px;
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          transition: all 0.2s ease;
+        }
+
+        .input-wrapper:focus-within {
+          border-color: #2E7D32;
+          box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        }
+
+        .input-icon {
+          color: #9CA3AF;
+          font-size: 16px;
+        }
+
+        .clean-input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 14px;
+          background: transparent;
+          color: #1F2937;
+        }
+
+        .clean-input::placeholder {
+          color: #9CA3AF;
+        }
+
+        .clean-input[type="number"] {
+          -moz-appearance: textfield;
+        }
+
+        .clean-input[type="number"]::-webkit-outer-spin-button,
+        .clean-input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        /* Edit Mode Inputs */
+        .edit-input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          background: white;
+          border-radius: 10px;
+          border: 1px solid #e5e7eb;
+          transition: all 0.2s ease;
+          width: 140px;
+        }
+
+        .edit-input-wrapper:focus-within {
+          border-color: #2E7D32;
+          box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+        }
+
+        .edit-input-icon {
+          color: #9CA3AF;
+          font-size: 14px;
+        }
+
+        .edit-input-field {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 13px;
+          background: transparent;
+          color: #1F2937;
+          width: 100px;
         }
 
         .add-btn {
           width: 100%;
           padding: 14px !important;
           font-size: 16px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 8px !important;
+          border-radius: 12px !important;
         }
 
         /* Table Card */
@@ -493,6 +595,7 @@ export default function VehicleTable() {
           margin-bottom: 24px;
           overflow: hidden;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
         }
 
         .table-wrapper {
@@ -535,6 +638,7 @@ export default function VehicleTable() {
         }
 
         .vehicle-badge {
+          display: inline-block;
           padding: 4px 12px;
           background: #f0f9f0;
           color: #2E7D32;
@@ -544,6 +648,7 @@ export default function VehicleTable() {
         }
 
         .fuel-badge {
+          display: inline-block;
           padding: 4px 12px;
           border-radius: 30px;
           font-size: 13px;
@@ -551,50 +656,59 @@ export default function VehicleTable() {
           border: 1px solid;
         }
 
+        .registration-text {
+          font-family: monospace;
+          font-weight: 500;
+          color: #4B5563;
+        }
+
         .number-cell {
           font-family: 'Inter', monospace;
           font-weight: 500;
+          color: #1F2937;
         }
 
         .actions-cell {
           display: flex;
           gap: 8px;
           align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .edit-actions {
+          display: flex;
+          gap: 8px;
+          width: 100%;
         }
 
         .edit-select {
           padding: 8px 12px;
-          border: 2px solid #e5e7eb;
+          border: 1px solid #e5e7eb;
           border-radius: 10px;
           width: 140px;
           font-size: 13px;
+          background: white;
         }
 
-        .edit-input {
-          width: 100px;
-        }
-
-        .edit-btn {
+        .edit-btn, .save-btn, .cancel-btn {
           padding: 6px 16px !important;
           font-size: 13px !important;
-        }
-
-        .save-btn {
-          padding: 6px 16px !important;
-          font-size: 13px !important;
+          border-radius: 30px !important;
         }
 
         .delete-btn {
           padding: 8px;
           background: white;
           border: 1px solid #fee2e2;
-          border-radius: 10px;
+          border-radius: 8px;
           color: #ef4444;
           cursor: pointer;
           transition: all 0.2s ease;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          width: 34px;
+          height: 34px;
         }
 
         .delete-btn:hover {
@@ -608,6 +722,7 @@ export default function VehicleTable() {
           padding: 0;
           overflow: hidden;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
         }
 
         .summary-grid {
@@ -700,11 +815,16 @@ export default function VehicleTable() {
           .actions-cell {
             flex-wrap: wrap;
           }
+
+          .edit-actions {
+            flex-direction: column;
+          }
         }
 
         @media (max-width: 480px) {
           .search-filter-bar {
             flex-direction: column;
+            align-items: stretch;
           }
 
           .filter-badge {

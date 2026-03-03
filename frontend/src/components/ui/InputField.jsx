@@ -14,8 +14,8 @@ export default function InputField({
   success = false,
   helperText = "",
   icon = null,
-  size = "md", // sm, md, lg
-  variant = "default", // default, outlined, filled
+  size = "md",
+  variant = "default",
   className = "",
   ...props
 }) {
@@ -25,26 +25,59 @@ export default function InputField({
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
-  const sizeClasses = {
-    sm: "py-1.5 text-sm",
-    md: "py-2.5 text-base",
-    lg: "py-3 text-lg",
+  // Size configurations
+  const sizeStyles = {
+    sm: {
+      container: "min-h-[36px]",
+      input: "text-xs",
+      icon: "text-base",
+      padding: "px-3 py-2",
+    },
+    md: {
+      container: "min-h-[42px]",
+      input: "text-sm",
+      icon: "text-lg",
+      padding: "px-4 py-2.5",
+    },
+    lg: {
+      container: "min-h-[48px]",
+      input: "text-base",
+      icon: "text-xl",
+      padding: "px-5 py-3",
+    },
   };
 
-  const variantClasses = {
-    default: "bg-white border-gray-300 focus:border-green-500 focus:ring-green-500",
-    outlined: "bg-transparent border-2 border-gray-300 focus:border-green-500",
-    filled: "bg-gray-100 border-transparent focus:bg-white focus:border-green-500",
+  // Variant configurations
+  const variantStyles = {
+    default: {
+      container: "bg-white border border-gray-200 hover:border-gray-300",
+      focus: "border-green-500 ring-2 ring-green-100",
+    },
+    outlined: {
+      container: "bg-transparent border-2 border-gray-200 hover:border-gray-300",
+      focus: "border-green-500 ring-0",
+    },
+    filled: {
+      container: "bg-gray-50 border border-transparent hover:bg-gray-100",
+      focus: "bg-white border-green-500 ring-2 ring-green-100",
+    },
   };
 
-  const errorClasses = error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "";
-  const successClasses = success ? "border-green-500" : "";
+  const currentSize = sizeStyles[size];
+  const currentVariant = variantStyles[variant];
+
+  // Status styles
+  const statusStyles = error 
+    ? "border-red-500 hover:border-red-600 focus:border-red-500 focus:ring-red-100" 
+    : success 
+    ? "border-green-500" 
+    : "";
 
   return (
-    <div className={`input-field-wrapper ${className}`}>
-      {/* Label with required indicator */}
+    <div className={`w-full ${className}`}>
+      {/* Label */}
       {label && (
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between mb-2">
           <label 
             htmlFor={name} 
             className="text-sm font-medium text-gray-700"
@@ -53,27 +86,27 @@ export default function InputField({
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
           {helperText && !error && (
-            <span className="text-xs text-gray-500">{helperText}</span>
+            <span className="text-xs text-gray-400">{helperText}</span>
           )}
         </div>
       )}
 
       {/* Input Container */}
-      <div 
+      <div
         className={`
           relative flex items-center
-          ${sizeClasses[size]}
-          ${variantClasses[variant]}
-          ${errorClasses || successClasses}
-          border rounded-lg
+          ${currentSize.container}
+          ${currentVariant.container}
+          ${statusStyles}
+          rounded-xl
           transition-all duration-200
-          ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}
-          ${isFocused ? 'ring-2 ring-green-500 ring-opacity-20' : ''}
+          ${disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : ''}
+          ${isFocused && !error ? currentVariant.focus : ''}
         `}
       >
         {/* Left Icon */}
         {icon && (
-          <span className="absolute left-3 text-gray-400">
+          <span className={`absolute left-4 ${currentSize.icon} text-gray-400`}>
             {icon}
           </span>
         )}
@@ -91,85 +124,59 @@ export default function InputField({
           required={required}
           disabled={disabled}
           className={`
-            w-full bg-transparent border-none outline-none
-            ${icon ? 'pl-10' : 'pl-3'}
-            ${isPassword ? 'pr-10' : 'pr-3'}
-            ${sizeClasses[size]}
+            w-full bg-transparent outline-none
+            ${currentSize.input}
+            ${currentSize.padding}
+            ${icon ? 'pl-11' : 'pl-4'}
+            ${isPassword || success || error ? 'pr-11' : 'pr-4'}
             placeholder:text-gray-400
             disabled:cursor-not-allowed
+            ${error ? 'text-red-900' : 'text-gray-900'}
           `}
           {...props}
         />
 
-        {/* Password Toggle */}
-        {isPassword && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
-            tabIndex="-1"
-          >
-            {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-          </button>
-        )}
+        {/* Right Icons */}
+        <div className="absolute right-4 flex items-center gap-2">
+          {/* Password Toggle */}
+          {isPassword && (
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              tabIndex="-1"
+            >
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            </button>
+          )}
 
-        {/* Success Icon */}
-        {success && !error && !isPassword && (
-          <span className="absolute right-3 text-green-500">
-            <FiCheckCircle size={18} />
-          </span>
-        )}
-
-        {/* Error Icon */}
-        {error && (
-          <span className="absolute right-3 text-red-500">
-            <FiAlertCircle size={18} />
-          </span>
-        )}
+          {/* Status Icons */}
+          {success && !error && !isPassword && (
+            <FiCheckCircle size={18} className="text-green-500" />
+          )}
+          {error && !isPassword && (
+            <FiAlertCircle size={18} className="text-red-500" />
+          )}
+        </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
-          <FiAlertCircle size={14} />
-          {error}
-        </p>
+        <div className="mt-2 flex items-start gap-1.5 text-sm text-red-600">
+          <FiAlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
       {/* Success Message */}
       {success && !error && helperText && (
-        <p className="mt-1.5 text-sm text-green-600">
-          {helperText}
-        </p>
+        <div className="mt-2 flex items-center gap-1.5 text-sm text-green-600">
+          <FiCheckCircle size={14} />
+          <span>{helperText}</span>
+        </div>
       )}
 
       <style jsx>{`
-        .input-field-wrapper {
-          width: 100%;
-        }
-
-        /* Focus ring animation */
-        @keyframes ringPulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-          }
-          70% {
-            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-          }
-        }
-
-        .input-field-wrapper:focus-within .relative {
-          animation: ringPulse 1.5s infinite;
-        }
-
-        /* Disabled state */
-        input:disabled {
-          -webkit-text-fill-color: #9CA3AF;
-        }
-
         /* Remove number input spinners */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
@@ -186,6 +193,21 @@ export default function InputField({
         input:-webkit-autofill:focus {
           -webkit-box-shadow: 0 0 0px 1000px white inset;
           transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Smooth transitions */
+        input, .relative {
+          transition: all 0.2s ease-in-out;
+        }
+
+        /* Focus animation */
+        @keyframes gentlePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+
+        .relative:focus-within {
+          animation: gentlePulse 2s infinite;
         }
       `}</style>
     </div>

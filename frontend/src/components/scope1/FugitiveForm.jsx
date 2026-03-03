@@ -4,6 +4,7 @@ import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
 import EmptyState from "../ui/EmptyState";
 import { useEmissionStore } from "../../store/emissionStore";
+import { FiSearch, FiPlus, FiTrash2, FiAlertCircle, FiDroplet } from "react-icons/fi";
 
 export default function FugitiveForm() {
   const fugitiveEntries = useEmissionStore((s) => s.scope1Fugitive);
@@ -55,7 +56,7 @@ export default function FugitiveForm() {
   }, [fugitiveEntries, searchTerm]);
 
   const totalAmount = fugitiveEntries.reduce((sum, f) => sum + f.amount, 0);
-  const totalCO2e = totalAmount * 1.1; // Example conversion factor
+  const totalCO2e = totalAmount * 1.1;
 
   return (
     <div className="fugitive-container">
@@ -66,8 +67,7 @@ export default function FugitiveForm() {
           <h3>Fugitive Emissions</h3>
           <p>
             Track <span className="highlight">unintentional leaks and releases</span> from equipment, 
-            pipelines, valves, and other industrial sources. These emissions are often challenging to 
-            measure but critical for accurate reporting.
+            pipelines, valves, and other industrial sources.
           </p>
         </div>
       </div>
@@ -75,10 +75,7 @@ export default function FugitiveForm() {
       {/* Search and Filter Bar */}
       <div className="search-filter-bar">
         <div className="search-box">
-          <svg className="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#6B7280" strokeWidth="2"/>
-            <path d="M19 19L15 15" stroke="#6B7280" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <FiSearch className="search-icon" size={20} />
           <input
             type="text"
             placeholder="Search emission sources..."
@@ -87,8 +84,8 @@ export default function FugitiveForm() {
             className="search-input"
           />
         </div>
-        <div className="filter-badge">
-          {fugitiveEntries.length} sources
+        <div style = {{margin: "25px"}}className="filter-badge">
+          {fugitiveEntries.length} {fugitiveEntries.length === 1 ? 'source' : 'sources'}
         </div>
       </div>
 
@@ -101,31 +98,37 @@ export default function FugitiveForm() {
         
         <div className="add-fugitive-form">
           <div className="form-row">
-            <div className="form-group source-select">
+            <div className="form-group">
               <label className="form-label">Emission Source</label>
-              <select
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                className="source-select"
-              >
-                <option value="">Select emission source</option>
-                {sourceOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              <div className="select-wrapper">
+                <FiAlertCircle className="select-icon" />
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="fugitive-select"
+                >
+                  <option value="">Select emission source</option>
+                  {sourceOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="form-group amount-input">
-              <label className="form-label">Amount (kg CH₄/CO₂e)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter estimated amount"
-                className="amount-field"
-              />
+            <div className="form-group">
+              <label className="form-label">Amount (kg)</label>
+              <div className="input-wrapper">
+                <FiDroplet className="input-icon" />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter estimated amount"
+                  className="clean-input"
+                />
+              </div>
             </div>
           </div>
 
@@ -138,7 +141,7 @@ export default function FugitiveForm() {
                 {source === "Coal Mining" && "Fugitive methane from mining operations"}
                 {source === "Oil & Gas Extraction" && "Leaks during extraction and processing"}
                 {source === "Pipeline Leaks" && "Natural gas leaks from transmission pipelines"}
-                {source === "Valve Leaks" || source === "Flange Leaks" ? "Common sources in industrial facilities" : ""}
+                {(source === "Valve Leaks" || source === "Flange Leaks") && "Common sources in industrial facilities"}
                 {![
                   "Landfills", "Coal Mining", "Oil & Gas Extraction", 
                   "Pipeline Leaks", "Valve Leaks", "Flange Leaks"
@@ -161,10 +164,7 @@ export default function FugitiveForm() {
           {/* Submit Button */}
           <div className="form-actions">
             <PrimaryButton onClick={handleAdd} className="submit-btn">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 4V16M4 10H16" stroke="white" strokeWidth="2"/>
-              </svg>
-              Add Fugitive Source
+              <FiPlus size={20} /> Add Fugitive Source
             </PrimaryButton>
           </div>
         </div>
@@ -183,10 +183,10 @@ export default function FugitiveForm() {
             <table className="entries-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Emission Source</th>
-                  <th style={{ width: '20%' }}>Amount (kg)</th>
-                  <th style={{ width: '20%' }}>CO₂e (t)</th>
-                  <th style={{ width: '20%' }}>Actions</th>
+                  <th>Emission Source</th>
+                  <th>Amount (kg)</th>
+                  <th>CO₂e (t)</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,9 +214,7 @@ export default function FugitiveForm() {
                           className="delete-btn"
                           title="Delete"
                         >
-                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                            <path d="M3 3L15 15M15 3L3 15" stroke="currentColor" strokeWidth="2"/>
-                          </svg>
+                          <FiTrash2 size={16} />
                         </button>
                       </td>
                     </tr>
@@ -329,6 +327,7 @@ export default function FugitiveForm() {
 
         .search-icon {
           flex-shrink: 0;
+          color: #9CA3AF;
         }
 
         .search-input {
@@ -340,7 +339,7 @@ export default function FugitiveForm() {
         }
 
         .filter-badge {
-          padding: 8px 16px;
+          padding: 8px 20px;
           background: #2E7D32;
           color: white;
           border-radius: 30px;
@@ -353,6 +352,8 @@ export default function FugitiveForm() {
         .add-fugitive-card {
           margin-bottom: 24px;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
+          overflow: hidden;
         }
 
         .card-header-compact {
@@ -380,9 +381,9 @@ export default function FugitiveForm() {
 
         .form-row {
           display: grid;
-          grid-template-columns: 2fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 20px;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
         }
 
         .form-group {
@@ -395,44 +396,95 @@ export default function FugitiveForm() {
           font-size: 14px;
           font-weight: 600;
           color: #374151;
+          margin-bottom: 4px;
         }
 
-        .source-select {
-          width: 100%;
-          padding: 12px 16px;
-          border: 2px solid #e5e7eb;
-          border-radius: 12px;
-          font-size: 14px;
+        /* Select Wrapper */
+        .select-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 12px;
           background: white;
-          transition: all 0.2s ease;
-          outline: none;
-        }
-
-        .source-select:focus {
-          border-color: #2E7D32;
-          box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
-        }
-
-        .amount-field {
-          width: 100%;
-          padding: 12px 16px;
-          border: 2px solid #e5e7eb;
           border-radius: 12px;
-          font-size: 14px;
+          border: 1px solid #e5e7eb;
           transition: all 0.2s ease;
-          outline: none;
+          height: 45px;
         }
 
-        .amount-field:focus {
+        .select-wrapper:focus-within {
           border-color: #2E7D32;
           box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        }
+
+        .select-icon {
+          color: #9CA3AF;
+          font-size: 16px;
+        }
+
+        .fugitive-select {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 14px;
+          background: transparent;
+          color: #1F2937;
+          height: 100%;
+          cursor: pointer;
+        }
+
+        /* Input Wrapper */
+        .input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 16px;
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          transition: all 0.2s ease;
+          height: 45px;
+        }
+
+        .input-wrapper:focus-within {
+          border-color: #2E7D32;
+          box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        }
+
+        .input-icon {
+          color: #9CA3AF;
+          font-size: 16px;
+        }
+
+        .clean-input {
+          flex: 1;
+          border: none;
+          outline: none;
+          font-size: 14px;
+          background: transparent;
+          color: #1F2937;
+          height: 100%;
+        }
+
+        .clean-input::placeholder {
+          color: #9CA3AF;
+        }
+
+        .clean-input[type="number"] {
+          -moz-appearance: textfield;
+        }
+
+        .clean-input[type="number"]::-webkit-outer-spin-button,
+        .clean-input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
         }
 
         .source-hint {
           padding: 12px 16px;
           background: #f0f9f0;
           border-radius: 12px;
-          margin-bottom: 16px;
+          margin: 20px 0;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -450,14 +502,15 @@ export default function FugitiveForm() {
         }
 
         .preview-calculation {
-          padding: 16px;
+          padding: 16px 20px;
           background: #f0f9f0;
           border-radius: 12px;
-          margin-bottom: 20px;
+          margin: 20px 0;
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 16px;
           flex-wrap: wrap;
+          border: 1px solid rgba(46, 125, 50, 0.2);
         }
 
         .preview-label {
@@ -480,10 +533,17 @@ export default function FugitiveForm() {
         .form-actions {
           display: flex;
           justify-content: flex-end;
+          margin-top: 16px;
         }
 
         .submit-btn {
           min-width: 220px;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 8px !important;
+          padding: 12px 24px !important;
+          border-radius: 30px !important;
         }
 
         /* Table Card */
@@ -491,6 +551,7 @@ export default function FugitiveForm() {
           margin-bottom: 24px;
           overflow: hidden;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
         }
 
         .table-wrapper {
@@ -503,26 +564,23 @@ export default function FugitiveForm() {
           border-collapse: separate;
           border-spacing: 0 8px;
           padding: 8px;
-          table-layout: fixed;
         }
 
         .entries-table th {
           text-align: left;
-          padding: 16px 12px;
+          padding: 16px 20px;
           background: #f8faf8;
           font-size: 13px;
           font-weight: 600;
           color: #4B5563;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          white-space: nowrap;
         }
 
         .entries-table td {
-          padding: 16px 12px;
+          padding: 16px 20px;
           background: white;
           border-bottom: 1px solid #f0f0f0;
-          word-break: break-word;
         }
 
         .entry-row {
@@ -543,10 +601,6 @@ export default function FugitiveForm() {
           border-radius: 30px;
           font-size: 13px;
           font-weight: 500;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
         }
 
         .co2e-indicator {
@@ -558,24 +612,22 @@ export default function FugitiveForm() {
         .number-cell {
           font-family: 'Inter', monospace;
           font-weight: 500;
-          font-size: 14px;
         }
 
         .actions-cell {
           display: flex;
           gap: 8px;
           align-items: center;
-          flex-wrap: wrap;
         }
 
         .edit-btn {
-          padding: 6px 12px !important;
-          font-size: 12px !important;
-          min-width: 60px;
+          padding: 6px 16px !important;
+          font-size: 13px !important;
+          border-radius: 30px !important;
         }
 
         .delete-btn {
-          padding: 6px;
+          padding: 8px;
           background: white;
           border: 1px solid #fee2e2;
           border-radius: 8px;
@@ -585,8 +637,8 @@ export default function FugitiveForm() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
         }
 
         .delete-btn:hover {
@@ -600,6 +652,7 @@ export default function FugitiveForm() {
           padding: 0;
           overflow: hidden;
           border: 1px solid rgba(46, 125, 50, 0.2);
+          border-radius: 20px;
         }
 
         .summary-grid {
@@ -684,14 +737,6 @@ export default function FugitiveForm() {
             gap: 16px;
           }
 
-          .entries-table {
-            table-layout: auto;
-          }
-          
-          .entries-table th {
-            white-space: normal;
-          }
-
           .summary-grid {
             grid-template-columns: 1fr;
           }
@@ -707,11 +752,6 @@ export default function FugitiveForm() {
           .actions-cell {
             flex-wrap: wrap;
           }
-
-          .preview-calculation {
-            flex-direction: column;
-            align-items: flex-start;
-          }
         }
 
         @media (max-width: 480px) {
@@ -725,6 +765,11 @@ export default function FugitiveForm() {
 
           .submit-btn {
             width: 100%;
+          }
+
+          .preview-calculation {
+            flex-direction: column;
+            align-items: flex-start;
           }
         }
       `}</style>
