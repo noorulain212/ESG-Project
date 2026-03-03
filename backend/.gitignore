@@ -1,0 +1,12 @@
+# Virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+keys/*.json
+
+# Python
+*.pyc
+__pycache__/
