@@ -10,3 +10,6 @@ keys/*.json
 # Python
 *.pyc
 __pycache__/
+
+setup_firestore_schema.py
+test_firestore.py
