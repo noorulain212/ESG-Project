@@ -4,7 +4,7 @@ from datetime import datetime
 
 from ..utils.firebase import get_db
 
-router = APIRouter(tags=["admin"])  # No prefix here — main.py handles it
+router = APIRouter()
 
 
 def get_factor_path(db, region: str, country: str, city: str, scope: str):
