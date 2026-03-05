@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 from datetime import datetime
 
 from ..utils.firebase import get_db
+from ..middleware.auth import require_role
 
-router = APIRouter()
+router = APIRouter()  # No prefix here — main.py handles it
 
 
 def get_factor_path(db, region: str, country: str, city: str, scope: str):
@@ -24,7 +25,11 @@ def get_factor_path(db, region: str, country: str, city: str, scope: str):
 
 
 @router.get("/cities")
-async def get_cities(region: str = "middle-east", country: str = "uae"):
+async def get_cities(
+    region: str = "middle-east",
+    country: str = "uae",
+    current_user: dict = Depends(require_role("admin"))
+):
     """Get all cities for a country."""
     db = get_db()
     try:
@@ -65,6 +70,7 @@ async def get_factors(
     scope: Optional[str] = Query(None, description="scope1 or scope2"),
     category: Optional[str] = Query(None),
     year: Optional[int] = Query(2026),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Get emission factors with optional filters."""
     db = get_db()
@@ -127,7 +133,10 @@ async def get_factors(
 
 
 @router.post("/factors")
-async def create_factor(factor: dict):
+async def create_factor(
+    factor: dict,
+    current_user: dict = Depends(require_role("admin"))
+):
     """Create or update an emission factor."""
     db = get_db()
     try:
@@ -167,7 +176,10 @@ async def create_factor(factor: dict):
 
 
 @router.delete("/factors/{factor_id}")
-async def delete_factor(factor_id: str):
+async def delete_factor(
+    factor_id: str,
+    current_user: dict = Depends(require_role("admin"))
+):
     """Delete a factor by its composite ID (region_country_city_scope_category_factorName)."""
     db = get_db()
     try:
