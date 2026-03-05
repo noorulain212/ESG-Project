@@ -14,3 +14,4 @@ __pycache__/
 setup_firestore_schema.py
 test_firestore.py
 get_token.py
+delete_factors.py
