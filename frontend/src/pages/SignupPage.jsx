@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import PrimaryButton from "../components/ui/PrimaryButton";
+import { useAuthStore } from "../store/authStore";
 import { 
   FiUser, 
   FiMail, 
@@ -25,6 +26,11 @@ export default function SignupPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const { register, loading, error, clearError } = useAuthStore();
+
+  useEffect(() => {
+    return () => clearError();
+  }, []);
 
   useEffect(() => {
     setIsVisible(true);
@@ -40,12 +46,14 @@ export default function SignupPage() {
     setPasswordStrength(strength);
   }, [password]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Add your signup logic here
-    navigate("/dashboard");
-  };
-
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (password !== confirmPassword) return;
+  const result = await register(email, password, name);
+  if (result.success) {
+    navigate("/setup");
+  }
+};
   const getStrengthColor = () => {
     const colors = ['#EF4444', '#F59E0B', '#FBBF24', '#10B981', '#059669'];
     return colors[passwordStrength] || '#E5E7EB';
@@ -97,6 +105,12 @@ export default function SignupPage() {
             <span className="counter-label">Trees</span>
           </div>
         </div>
+
+        {error && (
+          <div style={{background:"#FEF2F2", border:"1px solid #FECACA", color:"#DC2626", padding:"12px 16px", borderRadius:"12px", fontSize:"14px", marginBottom:"16px"}}>
+            ⚠️ {error}
+          </div>
+        )}
 
         {/* Signup Form */}
         <form onSubmit={handleSubmit} className="signup-form">
@@ -210,10 +224,10 @@ export default function SignupPage() {
             </label>
           </div>
 
-          <PrimaryButton type="submit" className="signup-button">
-            <span>Create Account</span>
-            <FiArrowRight className="button-icon" />
-          </PrimaryButton>
+    <PrimaryButton type="submit" className="signup-button" disabled={loading}>
+      <span>{loading ? "Creating account..." : "Create Account"}</span>
+      {!loading && <FiArrowRight className="button-icon" />}
+    </PrimaryButton>
         </form>
 
         {/* Social Signup */}
@@ -268,7 +282,7 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .signup-container {
           min-height: 100vh;
           width: 100%;

@@ -1,5 +1,5 @@
 // src/pages/SettingsPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Card from "../components/ui/Card";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import SelectDropdown from "../components/ui/SelectDropdown";
@@ -14,15 +14,21 @@ import {
   FiThermometer,
   FiAlertCircle,
   FiCheckCircle,
-  FiTrash2
+  FiTrash2,
+  FiLoader
 } from "react-icons/fi";
-import { BiLeaf, BiWorld, BiGasPump } from "react-icons/bi"; // BiGasPump instead of FiFuel
+import { BiLeaf, BiWorld, BiGasPump } from "react-icons/bi";
 import { GiFactory } from "react-icons/gi";
-
 import { useSettingsStore } from "../store/settingsStore";
+import { useAuthStore } from "../store/authStore";
 
 export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const token = useAuthStore((s) => s.token);
+
   const {
     reportingYear,
     currency,
@@ -34,12 +40,37 @@ export default function SettingsPage() {
     factorSource,
     updateSetting,
     resetSettings,
+    fetchSettings,
+    saveSettings,
   } = useSettingsStore();
 
-  const handleSave = () => {
-    // In a real app, you might save to backend here
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  // Fetch settings on mount
+  useEffect(() => {
+    if (token) {
+      fetchSettings(token);
+    }
+  }, [token]);
+
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
+    const result = await saveSettings(token, {
+      reportingYear,
+      currency,
+      region,
+      distanceUnit,
+      fuelUnit,
+      electricityUnit,
+      heatUnit,
+      factorSource,
+    });
+    setLoading(false);
+    if (result.success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } else {
+      setError(result.error || "Failed to save settings");
+    }
   };
 
   const handleReset = () => {
@@ -62,8 +93,14 @@ export default function SettingsPage() {
               <FiCheckCircle /> Settings saved
             </span>
           )}
-          <PrimaryButton onClick={handleSave} className="save-btn">
-            <FiSave /> Save Changes
+          {error && (
+            <span className="save-error">
+              <FiAlertCircle /> {error}
+            </span>
+          )}
+          <PrimaryButton onClick={handleSave} disabled={loading} className="save-btn">
+            {loading ? <FiRefreshCw className="spin" /> : <FiSave />}
+            {loading ? "Saving..." : "Save Changes"}
           </PrimaryButton>
         </div>
       </div>
@@ -73,9 +110,7 @@ export default function SettingsPage() {
         {/* General Settings */}
         <Card className="settings-card">
           <div className="card-header">
-            <div className="header-icon">
-              <FiGlobe />
-            </div>
+            <div className="header-icon"><FiGlobe /></div>
             <div>
               <h2>General Reporting</h2>
               <p>Basic reporting preferences</p>
@@ -84,13 +119,10 @@ export default function SettingsPage() {
 
           <div className="settings-form">
             <div className="form-group">
-              <label>
-                <FiCalendar className="label-icon" />
-                Reporting Year
-              </label>
+              <label><FiCalendar className="label-icon" />Reporting Year</label>
               <SelectDropdown
                 value={reportingYear}
-                onChange={(e) => updateSetting("reportingYear", e.target.value)}
+                onChange={(e) => updateSetting("reportingYear", Number(e.target.value))}
                 options={[
                   { label: "2024", value: "2024" },
                   { label: "2025", value: "2025" },
@@ -100,10 +132,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="form-group">
-              <label>
-                <FiDollarSign className="label-icon" />
-                Currency
-              </label>
+              <label><FiDollarSign className="label-icon" />Currency</label>
               <SelectDropdown
                 value={currency}
                 onChange={(e) => updateSetting("currency", e.target.value)}
@@ -111,16 +140,14 @@ export default function SettingsPage() {
                   { label: "USD ($)", value: "USD" },
                   { label: "EUR (€)", value: "EUR" },
                   { label: "GBP (£)", value: "GBP" },
+                  { label: "AED (د.إ)", value: "AED" },
                   { label: "PKR (₨)", value: "PKR" },
                 ]}
               />
             </div>
 
             <div className="form-group">
-              <label>
-                <FiMapPin className="label-icon" />
-                Default Region
-              </label>
+              <label><FiMapPin className="label-icon" />Default Region</label>
               <SelectDropdown
                 value={region}
                 onChange={(e) => updateSetting("region", e.target.value)}
@@ -138,9 +165,7 @@ export default function SettingsPage() {
         {/* Units Settings */}
         <Card className="settings-card">
           <div className="card-header">
-            <div className="header-icon">
-              <BiWorld />
-            </div>
+            <div className="header-icon"><BiWorld /></div>
             <div>
               <h2>Measurement Units</h2>
               <p>Preferred units for calculations</p>
@@ -149,10 +174,7 @@ export default function SettingsPage() {
 
           <div className="settings-form">
             <div className="form-group">
-              <label>
-                <FiMapPin className="label-icon" />
-                Distance Unit
-              </label>
+              <label><FiMapPin className="label-icon" />Distance Unit</label>
               <SelectDropdown
                 value={distanceUnit}
                 onChange={(e) => updateSetting("distanceUnit", e.target.value)}
@@ -164,10 +186,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="form-group">
-              <label>
-                <BiGasPump className="label-icon" /> {/* Changed from FiFuel to BiGasPump */}
-                Fuel Unit
-              </label>
+              <label><BiGasPump className="label-icon" />Fuel Unit</label>
               <SelectDropdown
                 value={fuelUnit}
                 onChange={(e) => updateSetting("fuelUnit", e.target.value)}
@@ -180,10 +199,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="form-group">
-              <label>
-                <FiZap className="label-icon" />
-                Electricity Unit
-              </label>
+              <label><FiZap className="label-icon" />Electricity Unit</label>
               <SelectDropdown
                 value={electricityUnit}
                 onChange={(e) => updateSetting("electricityUnit", e.target.value)}
@@ -195,10 +211,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="form-group">
-              <label>
-                <FiThermometer className="label-icon" />
-                Heat Unit
-              </label>
+              <label><FiThermometer className="label-icon" />Heat Unit</label>
               <SelectDropdown
                 value={heatUnit}
                 onChange={(e) => updateSetting("heatUnit", e.target.value)}
@@ -214,9 +227,7 @@ export default function SettingsPage() {
         {/* Emission Factors */}
         <Card className="settings-card">
           <div className="card-header">
-            <div className="header-icon">
-              <GiFactory />
-            </div>
+            <div className="header-icon"><GiFactory /></div>
             <div>
               <h2>Emission Factors</h2>
               <p>Choose your factor database</p>
@@ -225,14 +236,12 @@ export default function SettingsPage() {
 
           <div className="settings-form">
             <div className="form-group">
-              <label>
-                <BiLeaf className="label-icon" />
-                Factor Database
-              </label>
+              <label><BiLeaf className="label-icon" />Factor Database</label>
               <SelectDropdown
                 value={factorSource}
                 onChange={(e) => updateSetting("factorSource", e.target.value)}
                 options={[
+                  { label: "🇦🇪 UAE MoCCaE", value: "UAE MoCCaE" },
                   { label: "🇬🇧 DEFRA (UK)", value: "DEFRA" },
                   { label: "🇺🇸 EPA (US)", value: "EPA" },
                   { label: "🇪🇺 EEA (Europe)", value: "EEA" },
@@ -251,9 +260,7 @@ export default function SettingsPage() {
         {/* Data Management */}
         <Card className="settings-card">
           <div className="card-header">
-            <div className="header-icon">
-              <FiRefreshCw />
-            </div>
+            <div className="header-icon"><FiRefreshCw /></div>
             <div>
               <h2>Data Management</h2>
               <p>Import, export, and reset options</p>
@@ -265,14 +272,18 @@ export default function SettingsPage() {
               <PrimaryButton onClick={handleReset} className="reset-btn">
                 <FiRefreshCw /> Reset to Default
               </PrimaryButton>
-              
-              <button className="export-btn">
-                Export Data
-              </button>
+              <button className="export-btn">Export Data</button>
             </div>
 
             <div className="danger-zone">
-              <button className="delete-btn">
+              <button
+                className="delete-btn"
+                onClick={() => {
+                  if (window.confirm("This will permanently delete all your emission data. Are you sure?")) {
+                    alert("Delete functionality coming soon.");
+                  }
+                }}
+              >
                 <FiTrash2 /> Delete All Data
               </button>
             </div>
@@ -287,7 +298,6 @@ export default function SettingsPage() {
           margin: 0 auto;
         }
 
-        /* Header */
         .settings-header {
           display: flex;
           justify-content: space-between;
@@ -313,6 +323,7 @@ export default function SettingsPage() {
           display: flex;
           align-items: center;
           gap: 16px;
+          flex-wrap: wrap;
         }
 
         .save-success {
@@ -325,9 +336,27 @@ export default function SettingsPage() {
           animation: fadeIn 0.3s ease;
         }
 
+        .save-error {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #DC2626;
+          font-size: 14px;
+          font-weight: 500;
+        }
+
         @keyframes fadeIn {
           from { opacity: 0; transform: translateX(10px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .spin {
+          animation: spin 1s linear infinite;
         }
 
         .save-btn {
@@ -338,7 +367,11 @@ export default function SettingsPage() {
           background: linear-gradient(135deg, #15803D, #22C55E) !important;
         }
 
-        /* Settings Grid */
+        .save-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
         .settings-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -376,6 +409,7 @@ export default function SettingsPage() {
           justify-content: center;
           font-size: 24px;
           color: #22C55E;
+          flex-shrink: 0;
         }
 
         .card-header h2 {
@@ -391,7 +425,6 @@ export default function SettingsPage() {
           margin: 0;
         }
 
-        /* Settings Form */
         .settings-form {
           display: flex;
           flex-direction: column;
@@ -420,7 +453,6 @@ export default function SettingsPage() {
           font-size: 14px;
         }
 
-        /* Factor Info */
         .factor-info {
           display: flex;
           align-items: center;
@@ -443,7 +475,6 @@ export default function SettingsPage() {
           color: #166534;
         }
 
-        /* Button Group */
         .button-group {
           display: flex;
           gap: 12px;
@@ -481,20 +512,12 @@ export default function SettingsPage() {
           background: #F0FDF4;
         }
 
-        /* Danger Zone */
         .danger-zone {
           margin-top: 16px;
           padding: 16px;
           background: #FEF2F2;
           border-radius: 12px;
           border: 1px solid #FECACA;
-        }
-
-        .danger-zone h4 {
-          font-size: 14px;
-          font-weight: 600;
-          color: #B91C1C;
-          margin: 0 0 12px;
         }
 
         .delete-btn {
@@ -519,24 +542,11 @@ export default function SettingsPage() {
           color: white;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
-          .settings-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .settings-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .header-actions {
-            width: 100%;
-          }
-
-          .save-btn {
-            width: 100%;
-          }
+          .settings-grid { grid-template-columns: 1fr; }
+          .settings-header { flex-direction: column; align-items: flex-start; }
+          .header-actions { width: 100%; }
+          .save-btn { width: 100%; }
         }
       `}</style>
     </div>

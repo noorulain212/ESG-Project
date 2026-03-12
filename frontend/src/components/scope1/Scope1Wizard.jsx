@@ -8,6 +8,53 @@ import StationaryForm from "./StationaryForm";
 import RefrigerantForm from "./RefrigerantForm";
 import FugitiveForm from "./FugitiveForm";
 import Scope1Summary from "./Scope1Summary";
+import { useAuthStore } from "../../store/authStore";
+
+function SubmitScope1Button() {
+  const { submitScope1, loading } = useEmissionStore();
+  const token = useAuthStore((state) => state.token);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+
+  const handleSubmit = async () => {
+  const result = await submitScope1(token, year, month);
+  console.log("Submit result:", JSON.stringify(result));
+  if (result.success) {
+    setSubmitted(true);
+    setError(null);
+  } else {
+    setError(result.error || "Submission failed");
+  }
+};
+
+  if (submitted) return (
+    <PrimaryButton disabled className="nav-btn finish-btn">
+      ✅ Submitted!
+    </PrimaryButton>
+  );
+
+  return (
+    <div style={{display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px"}}>
+      <div style={{display: "flex", gap: "8px", alignItems: "center"}}>
+        <select value={year} onChange={(e) => setYear(Number(e.target.value))}
+          style={{padding: "8px 12px", borderRadius: "8px", border: "1px solid #E5E7EB", fontSize: "14px"}}>
+          {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
+          style={{padding: "8px 12px", borderRadius: "8px", border: "1px solid #E5E7EB", fontSize: "14px"}}>
+          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            .map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
+        </select>
+      </div>
+      {error && <span style={{color: "red", fontSize: "13px"}}>{error}</span>}
+      <PrimaryButton onClick={handleSubmit} disabled={loading} className="nav-btn finish-btn">
+        {loading ? "Submitting..." : "Submit Scope 1 →"}
+      </PrimaryButton>
+    </div>
+  );
+}
 
 export default function Scope1Wizard() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -111,21 +158,17 @@ export default function Scope1Wizard() {
             ← Previous
           </SecondaryButton>
           
-          {currentStep < totalSteps ? (
+        
+        {currentStep < totalSteps ? (
             <PrimaryButton 
-              onClick={nextStep} 
-              className="nav-btn next-btn"
+                onClick={nextStep} 
+                className="nav-btn next-btn"
             >
-              Next →
+                Next →
             </PrimaryButton>
-          ) : (
-            <PrimaryButton 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="nav-btn finish-btn"
-            >
-              Back to Top
-            </PrimaryButton>
-          )}
+            ) : (
+                <SubmitScope1Button />
+        )}
         </div>
       </Card>
 

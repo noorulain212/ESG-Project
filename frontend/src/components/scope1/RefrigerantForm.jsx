@@ -3,71 +3,78 @@ import Card from "../ui/Card";
 import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
 import EmptyState from "../ui/EmptyState";
+import SelectDropdown from "../ui/SelectDropdown";
 import { useEmissionStore } from "../../store/emissionStore";
-import { FiSearch, FiPlus, FiTrash2, FiAlertCircle, FiDroplet } from "react-icons/fi";
+import { FiSearch, FiPlus, FiTrash2, FiDroplet, FiThermometer } from "react-icons/fi";
 
-export default function FugitiveForm() {
-  const fugitiveEntries = useEmissionStore((s) => s.scope1Fugitive);
-  const addFugitive = useEmissionStore((s) => s.addScope1Fugitive);
-  const deleteFugitive = useEmissionStore((s) => s.deleteScope1Fugitive);
+export default function RefrigerantForm() {
+  const refrigerants = useEmissionStore((s) => s.scope1Refrigerants);
+  const addRefrigerant = useEmissionStore((s) => s.addScope1Refrigerant);
+  const deleteRefrigerant = useEmissionStore((s) => s.deleteScope1Refrigerant);
 
-  const [source, setSource] = useState("");
-  const [amount, setAmount] = useState("");
+  const [refrigerantType, setRefrigerantType] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const sourceOptions = [
-    "Pipeline Leaks",
-    "Valve Leaks",
-    "Flange Leaks",
-    "Compressor Seals",
-    "Storage Tanks",
-    "Pressure Relief Devices",
-    "Open-ended Lines",
-    "Sampling Connections",
-    "Wastewater Treatment",
-    "Cooling Towers",
-    "Coal Mining",
-    "Oil & Gas Extraction",
-    "Landfills",
-    "Other"
+  const refrigerantOptions = [
+    { label: "R-134a", value: "R-134a", gwp: 1430 },
+    { label: "R-410A", value: "R-410A", gwp: 2088 },
+    { label: "R-22", value: "R-22", gwp: 1810 },
+    { label: "R-404A", value: "R-404A", gwp: 3943 },
+    { label: "R-407C", value: "R-407C", gwp: 1774 },
+    // removing the refriigerants for now
+    //{ label: "R-32", value: "R-32", gwp: 677 },
+    //{ label: "R-123", value: "R-123", gwp: 77 },
+    //{ label: "R-245fa", value: "R-245fa", gwp: 1030 },
+    //{ label: "R-717 (Ammonia)", value: "Ammonia", gwp: 0 },
+    //{ label: "R-744 (CO2)", value: "CO2", gwp: 1 },
   ];
 
   const handleAdd = () => {
-    if (!source || !amount) {
-      alert("Enter all fields");
-      return;
-    }
-    addFugitive({
-      id: Date.now(),
-      source,
-      amount: Number(amount),
-    });
-    setSource("");
-    setAmount("");
+  if (!refrigerantType || !quantity) {
+    alert("Enter all fields");
+    return;
+  }
+  console.log("Adding refrigerant:", { refrigerantType, quantity });
+  addRefrigerant({
+    id: Date.now(),
+    refrigerantType,
+    gwp: Number(quantity),
+  });
+  setRefrigerantType("");
+  setQuantity("");
+};
+
+  const handleDelete = (id) => deleteRefrigerant(id);
+
+  // Filtered display
+  const displayedEntries = useMemo(() => {
+    if (!searchTerm) return refrigerants;
+    return refrigerants.filter(
+      r =>
+        r.refrigerantType.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [refrigerants, searchTerm]);
+
+  const totalGWP = refrigerants.reduce((sum, r) => sum + r.gwp, 0);
+  const totalCO2e = totalGWP * 0.001;
+
+  // Get GWP factor for selected refrigerant
+  const getSelectedGWP = () => {
+    const selected = refrigerantOptions.find(opt => opt.value === refrigerantType);
+    return selected ? selected.gwp : 0;
   };
 
-  const handleDelete = (id) => deleteFugitive(id);
-
-  const displayedEntries = useMemo(() => {
-    if (!searchTerm) return fugitiveEntries;
-    return fugitiveEntries.filter(f =>
-      f.source.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [fugitiveEntries, searchTerm]);
-
-  const totalAmount = fugitiveEntries.reduce((sum, f) => sum + f.amount, 0);
-  const totalCO2e = totalAmount * 1.1;
-
   return (
-    <div className="fugitive-container">
+    <div className="refrigerant-container">
       {/* Header with description */}
       <div className="section-description">
-        <div className="description-icon">💨</div>
+        <div className="description-icon">❄️</div>
         <div className="description-content">
-          <h3>Fugitive Emissions</h3>
+          <h3>Refrigerant Management</h3>
           <p>
-            Track <span className="highlight">unintentional leaks and releases</span> from equipment, 
-            pipelines, valves, and other industrial sources.
+            Track <span className="highlight">refrigerant usage and leaks</span> from cooling equipment. 
+            Refrigerants have high global warming potential (GWP) and must be reported accurately.
           </p>
         </div>
       </div>
@@ -78,93 +85,82 @@ export default function FugitiveForm() {
           <FiSearch className="search-icon" size={20} />
           <input
             type="text"
-            placeholder="Search emission sources..."
+            placeholder="Search refrigerants..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
         </div>
-        <div className="filter-badge">
-          {fugitiveEntries.length} {fugitiveEntries.length === 1 ? 'source' : 'sources'}
+        <div style = {{margin: "25px"}}className="filter-badge">
+          {refrigerants.length} {refrigerants.length === 1 ? 'entry' : 'entries'}
         </div>
       </div>
 
-      {/* Add Fugitive Form Card */}
-      <Card className="add-fugitive-card">
+      {/* Add Refrigerant Form Card */}
+      <Card className="add-refrigerant-card">
         <div className="card-header-compact">
-          <h4>Add Fugitive Emission Source</h4>
-          <p>Enter source details and estimated amount</p>
+          <h4>Add Refrigerant Entry</h4>
+          <p>Select refrigerant type and enter quantity (kg)</p>
         </div>
         
-        <div className="add-fugitive-form">
+        <div className="add-refrigerant-form">
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Emission Source</label>
+              <label className="form-label">Refrigerant Type</label>
               <div className="select-wrapper">
-                <FiAlertCircle className="select-icon" />
+                <FiThermometer className="select-icon" />
                 <select
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  className="source-select"
+                  value={refrigerantType}
+                  onChange={(e) => setRefrigerantType(e.target.value)}
+                  className="refrigerant-select"
                 >
-                  <option value="">Select emission source</option>
-                  {sourceOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                  <option value="">Select refrigerant type</option>
+                  {refrigerantOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} (GWP: {opt.gwp})
+                    </option>
                   ))}
                 </select>
               </div>
+              {refrigerantType && (
+                <div className="gwp-indicator">
+                  <span className="gwp-label">GWP Factor:</span>
+                  <span className="gwp-value">{getSelectedGWP()}</span>
+                </div>
+              )}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Amount (kg CH₄/CO₂e)</label>
+              <label className="form-label">Quantity (kg)</label>
               <div className="input-wrapper">
                 <FiDroplet className="input-icon" />
                 <input
                   type="number"
                   min="0"
                   step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter estimated amount"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="Enter quantity in kg"
                   className="clean-input"
                 />
               </div>
             </div>
           </div>
 
-          {/* Source category hint */}
-          {source && (
-            <div className="source-hint">
-              <span className="hint-icon">ℹ️</span>
-              <span className="hint-text">
-                {source === "Landfills" && "Methane from decomposing organic waste"}
-                {source === "Coal Mining" && "Fugitive methane from mining operations"}
-                {source === "Oil & Gas Extraction" && "Leaks during extraction and processing"}
-                {source === "Pipeline Leaks" && "Natural gas leaks from transmission pipelines"}
-                {(source === "Valve Leaks" || source === "Flange Leaks") && "Common sources in industrial facilities"}
-                {![
-                  "Landfills", "Coal Mining", "Oil & Gas Extraction", 
-                  "Pipeline Leaks", "Valve Leaks", "Flange Leaks"
-                ].includes(source) && "Enter estimated fugitive emissions"}
-              </span>
-            </div>
-          )}
-
-          {/* Preview calculation if amount is filled */}
-          {amount && Number(amount) > 0 && (
+          {/* Preview calculation if both fields are filled */}
+          {refrigerantType && quantity && Number(quantity) > 0 && (
             <div className="preview-calculation">
               <span className="preview-label">Estimated CO₂e:</span>
               <span className="preview-value">
-                {(Number(amount) * 1.1).toFixed(2)} tCO₂e
+                {(Number(quantity) * getSelectedGWP() / 1000).toFixed(3)} tCO₂e
               </span>
-              <span className="preview-note">(using default factor 1.1)</span>
             </div>
           )}
 
           {/* Submit Button */}
           <div className="form-actions">
             <PrimaryButton onClick={handleAdd} className="submit-btn">
-              <FiPlus size={20} /> Add Fugitive Source
+              <FiPlus size={20} /> Add Refrigerant Entry
             </PrimaryButton>
           </div>
         </div>
@@ -173,8 +169,8 @@ export default function FugitiveForm() {
       {/* Entries Table */}
       {displayedEntries.length === 0 ? (
         <EmptyState 
-          message="No fugitive emission sources added yet" 
-          icon="💨"
+          message="No refrigerant entries added yet" 
+          icon="❄️"
           className="empty-state-custom"
         />
       ) : (
@@ -183,22 +179,27 @@ export default function FugitiveForm() {
             <table className="entries-table">
               <thead>
                 <tr>
-                  <th>Emission Source</th>
-                  <th>Amount (kg)</th>
+                  <th>Refrigerant Type</th>
+                  <th>Quantity (kg)</th>
+                  <th>GWP Factor</th>
                   <th>CO₂e (t)</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {displayedEntries.map(f => {
-                  const co2e = (f.amount * 1.1).toFixed(2);
+                {displayedEntries.map(r => {
+                  const gwpFactor = refrigerantOptions.find(opt => opt.value === r.refrigerantType)?.gwp || 1000;
+                  const co2e = (r.gwp * gwpFactor / 1000).toFixed(3);
                   
                   return (
-                    <tr key={f.id} className="entry-row">
+                    <tr key={r.id} className="entry-row">
                       <td>
-                        <span className="source-badge">{f.source}</span>
+                        <span className="refrigerant-badge">{r.refrigerantType}</span>
                       </td>
-                      <td className="number-cell">{f.amount.toLocaleString()}</td>
+                      <td className="number-cell">{r.gwp.toLocaleString()}</td>
+                      <td>
+                        <span className="gwp-badge">{gwpFactor}</span>
+                      </td>
                       <td>
                         <span className="co2e-indicator">{co2e}</span>
                       </td>
@@ -210,7 +211,7 @@ export default function FugitiveForm() {
                           Edit
                         </SecondaryButton>
                         <button 
-                          onClick={() => handleDelete(f.id)} 
+                          onClick={() => handleDelete(r.id)} 
                           className="delete-btn"
                           title="Delete"
                         >
@@ -230,12 +231,12 @@ export default function FugitiveForm() {
       <Card className="summary-footer">
         <div className="summary-grid">
           <div className="summary-item">
-            <span className="summary-label">Total Sources</span>
-            <span className="summary-value">{fugitiveEntries.length}</span>
+            <span className="summary-label">Total Refrigerant</span>
+            <span className="summary-value">{refrigerants.length} entries</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">Total Amount</span>
-            <span className="summary-value">{totalAmount.toLocaleString()} kg</span>
+            <span className="summary-label">Total Quantity</span>
+            <span className="summary-value">{totalGWP.toLocaleString()} kg</span>
           </div>
           <div className="summary-item highlight">
             <span className="summary-label">Total CO₂e</span>
@@ -245,13 +246,13 @@ export default function FugitiveForm() {
           </div>
         </div>
         <div className="footer-note">
-          <p>🌱 Based on IPCC default emission factors for fugitive sources</p>
-          <p className="footnote">*Fugitive emissions include methane (CH₄) and other greenhouse gases</p>
+          <p>🌱 Based on IPCC AR5 GWP values for refrigerants</p>
+          <p className="footnote">*CO₂e calculated using refrigerant-specific GWP factors</p>
         </div>
       </Card>
 
       <style jsx>{`
-        .fugitive-container {
+        .refrigerant-container {
           width: 100%;
           max-width: 1400px;
           margin: 0 auto;
@@ -348,8 +349,8 @@ export default function FugitiveForm() {
           white-space: nowrap;
         }
 
-        /* Add Fugitive Card */
-        .add-fugitive-card {
+        /* Add Refrigerant Card */
+        .add-refrigerant-card {
           margin-bottom: 24px;
           border: 1px solid rgba(46, 125, 50, 0.2);
           border-radius: 20px;
@@ -375,7 +376,7 @@ export default function FugitiveForm() {
           color: #6B7280;
         }
 
-        .add-fugitive-form {
+        .add-refrigerant-form {
           padding: 24px;
         }
 
@@ -399,7 +400,7 @@ export default function FugitiveForm() {
           margin-bottom: 4px;
         }
 
-        /* Select Wrapper */
+        /* Select Wrapper - Matching input style */
         .select-wrapper {
           display: flex;
           align-items: center;
@@ -422,7 +423,7 @@ export default function FugitiveForm() {
           font-size: 16px;
         }
 
-        .source-select {
+        .refrigerant-select {
           flex: 1;
           border: none;
           outline: none;
@@ -433,7 +434,7 @@ export default function FugitiveForm() {
           cursor: pointer;
         }
 
-        /* Input Wrapper */
+        /* Input Wrapper - Clean style from VehicleTable */
         .input-wrapper {
           display: flex;
           align-items: center;
@@ -480,25 +481,24 @@ export default function FugitiveForm() {
           margin: 0;
         }
 
-        .source-hint {
-          padding: 12px 16px;
-          background: #f0f9f0;
-          border-radius: 12px;
-          margin: 20px 0;
+        .gwp-indicator {
           display: flex;
           align-items: center;
           gap: 8px;
+          padding: 8px 12px;
+          background: #f0f9f0;
+          border-radius: 10px;
           font-size: 13px;
-          color: #374151;
-          border-left: 3px solid #2E7D32;
+          margin-top: 8px;
         }
 
-        .hint-icon {
-          font-size: 16px;
+        .gwp-label {
+          color: #4B5563;
         }
 
-        .hint-text {
-          line-height: 1.5;
+        .gwp-value {
+          font-weight: 700;
+          color: #2E7D32;
         }
 
         .preview-calculation {
@@ -508,8 +508,7 @@ export default function FugitiveForm() {
           margin: 20px 0;
           display: flex;
           align-items: center;
-          gap: 16px;
-          flex-wrap: wrap;
+          justify-content: space-between;
           border: 1px solid rgba(46, 125, 50, 0.2);
         }
 
@@ -523,11 +522,6 @@ export default function FugitiveForm() {
           font-size: 18px;
           font-weight: 700;
           color: #2E7D32;
-        }
-
-        .preview-note {
-          font-size: 12px;
-          color: #6B7280;
         }
 
         .form-actions {
@@ -593,7 +587,7 @@ export default function FugitiveForm() {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        .source-badge {
+        .refrigerant-badge {
           display: inline-block;
           padding: 4px 12px;
           background: #e0f2fe;
@@ -601,6 +595,15 @@ export default function FugitiveForm() {
           border-radius: 30px;
           font-size: 13px;
           font-weight: 500;
+        }
+
+        .gwp-badge {
+          display: inline-block;
+          padding: 4px 10px;
+          background: #f3f4f6;
+          border-radius: 20px;
+          font-size: 12px;
+          color: #4B5563;
         }
 
         .co2e-indicator {
@@ -723,7 +726,7 @@ export default function FugitiveForm() {
 
         /* Responsive */
         @media (max-width: 768px) {
-          .fugitive-container {
+          .refrigerant-container {
             padding: 12px;
           }
 
@@ -770,6 +773,7 @@ export default function FugitiveForm() {
           .preview-calculation {
             flex-direction: column;
             align-items: flex-start;
+            gap: 8px;
           }
         }
       `}</style>

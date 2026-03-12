@@ -17,10 +17,11 @@ import ContactPage from "../pages/ContactPage";
 import EmissionFactorsPage from "../pages/admin/EmissionFactorsPage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-
+import { useCompanyStore } from "../store/companyStore";
 export default function AppRoutes() {
   const { loggedIn } = useAuthStore();
 
+  
   return (
     <Routes>
       {/* Public routes - NO header/sidebar */}
@@ -40,13 +41,13 @@ export default function AppRoutes() {
       />
 
       <Route
-        path="/setup"
-        element={
-          <AppLayout>
+      path="/setup"
+      element={
+        <AppLayout>
             <CompanySetupPage />
-          </AppLayout>
-        }
-      />
+        </AppLayout>
+      }
+    />
 
       <Route
         path="/scope1"

@@ -1,20 +1,24 @@
-// src/pages/CompanySetupPage.jsx
-import React from "react";
-import CompanyWizard from "../components/company/CompanyWizard";
+import { useCompanyStore } from "../store/companyStore";
 import { BiLeaf } from "react-icons/bi";
-
+import CompanyWizard from "../components/company/CompanyWizard";
 export default function CompanySetupPage() {
+  const { company } = useCompanyStore();
+
   return (
     <div className="setup-page">
-      <div className="page-header">
-        <div className="header-content">
-          <BiLeaf className="header-icon" />
-          <h1>Company Setup</h1>
-          <p>Complete your company profile to start calculating emissions</p>
+      {!company && (
+        <div className="page-header">
+          <div className="header-content">
+            <BiLeaf className="header-icon" />
+            <h1>Company Setup</h1>
+            <p>Complete your company profile to start calculating emissions</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <CompanyWizard />
+      
+     
 
       <style jsx>{`
         .setup-page {

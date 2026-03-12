@@ -1,22 +1,26 @@
 import React from "react";
 import { useEmissionStore } from "../../store/emissionStore";
-import { EmissionCalculator } from "../../services/EmissionCalculator";
-import { UnitConverter } from "../../services/UnitConverter";
 import Card from "../ui/Card";
 
 export default function Scope2Summary() {
   const electricity = useEmissionStore((s) => s.scope2Electricity);
   const heating = useEmissionStore((s) => s.scope2Heating);
   const renewable = useEmissionStore((s) => s.scope2Renewable);
+  const scope2Results = useEmissionStore((s) => s.scope2Results);
+const scope2Total = useEmissionStore((s) => s.scope2Total);
 
-  // Calculate totals using EmissionCalculator
-  const totals = EmissionCalculator.calculateScope2({
-    electricity,
-    heating,
-    renewable,
-    unitConverter: UnitConverter,
-  }) || {}; // fallback to empty object
-
+// Use backend results after submission, otherwise show live estimates from entries
+const totals = scope2Results ? {
+  electricity: scope2Results.electricity?.kgCO2e || 0,
+  heating: scope2Results.heating?.kgCO2e || 0,
+  renewable: scope2Results.renewables?.kgCO2e || 0,
+  co2e: scope2Results.total?.kgCO2e || 0,
+} : {
+  electricity: electricity.reduce((sum, e) => sum + Number(e.consumption || 0), 0),
+  heating: heating.reduce((sum, h) => sum + Number(h.consumption || 0), 0),
+  renewable: renewable.reduce((sum, r) => sum + Number(r.consumption || 0), 0),
+  co2e: scope2Total,
+};
   // Check if any data exists
   const hasData = electricity.length > 0 || heating.length > 0 || renewable.length > 0;
 

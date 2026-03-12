@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useEmissionStore } from "../../store/emissionStore";
+import { useAuthStore } from "../../store/authStore";
 import Card from "../ui/Card";
 import PrimaryButton from "../ui/PrimaryButton";
 import SecondaryButton from "../ui/SecondaryButton";
@@ -7,6 +8,58 @@ import ElectricityForm from "./ElectricityForm";
 import HeatingForm from "./HeatingForm";
 import RenewableForm from "./RenewableForm";
 import Scope2Summary from "./Scope2Summary";
+
+function SubmitScope2Button({ onSubmitted }) {
+  const { submitScope2, loading } = useEmissionStore();
+  const token = useAuthStore((state) => state.token);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+
+  const handleSubmit = async () => {
+    const result = await submitScope2(token, year, month);
+    if (result.success) {
+      setSubmitted(true);
+      onSubmitted?.();
+      setError(null);
+    } else {
+      setError(result.error || "Submission failed");
+    }
+  };
+
+  if (submitted) return (
+    <PrimaryButton disabled className="nav-btn finish-btn">
+      ✅ Submitted!
+    </PrimaryButton>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <select 
+          value={year} 
+          onChange={(e) => setYear(Number(e.target.value))}
+          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #E5E7EB", fontSize: "14px" }}
+        >
+          {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select 
+          value={month} 
+          onChange={(e) => setMonth(Number(e.target.value))}
+          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #E5E7EB", fontSize: "14px" }}
+        >
+          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            .map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
+        </select>
+      </div>
+      {error && <span style={{ color: "red", fontSize: "13px" }}>{error}</span>}
+      <PrimaryButton onClick={handleSubmit} disabled={loading} className="nav-btn finish-btn">
+        {loading ? "Submitting..." : "Submit Scope 2 →"}
+      </PrimaryButton>
+    </div>
+  );
+}
 
 export default function Scope2Wizard() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -115,12 +168,7 @@ export default function Scope2Wizard() {
               Next →
             </PrimaryButton>
           ) : (
-            <PrimaryButton 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="nav-btn finish-btn"
-            >
-              Back to Top
-            </PrimaryButton>
+            <SubmitScope2Button />
           )}
         </div>
       </Card>

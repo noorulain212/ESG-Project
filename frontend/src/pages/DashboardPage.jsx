@@ -1,58 +1,61 @@
 // src/pages/DashboardPage.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import { 
   FiTrendingUp, 
   FiCalendar, 
   FiDownload,
   FiAlertCircle,
   FiZap,
-  FiPieChart,
-  FiArrowUp,
-  FiArrowDown,
   FiTarget,
   FiClock,
   FiAward
 } from "react-icons/fi";
 import { BiLeaf, BiTrendingUp } from "react-icons/bi";
-import { GiEarthAmerica, GiFactory } from "react-icons/gi";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import ScopeBreakdown from "../components/dashboard/ScopeBreakdown";
 import EmissionsTrendLine from "../components/dashboard/DashboardCharts/EmissionsTrendLine";
 import TotalEmissionsPie from "../components/dashboard/DashboardCharts/TotalEmissionsPie";
+import { useAuthStore } from "../store/authStore";
 import { useEmissionStore } from "../store/emissionStore";
 import Card from "../components/ui/Card";
 
 export default function DashboardPage() {
-  const scope1Total = useEmissionStore((s) => s.scope1Total || 0);
-  const scope2Total = useEmissionStore((s) => s.scope2Total || 0);
+  const token = useAuthStore((s) => s.token);
+  const fetchSummary = useEmissionStore((s) => s.fetchSummary);
+  const scope1Results = useEmissionStore((s) => s.scope1Results);
+  const scope2Results = useEmissionStore((s) => s.scope2Results);
+
+  useEffect(() => {
+    if (token) fetchSummary(token);
+  }, [token]);
+
+  const scope1Kg = scope1Results?.total?.kgCO2e || 0;
+  const scope2Kg = scope2Results?.total?.kgCO2e || 0;
+  const totalKg = scope1Kg + scope2Kg;
+  const totalTonnes = totalKg / 1000;
+  const currentEmissions = totalTonnes;
 
   const scope1Breakdown = [
-    { label: "Mobile Combustion", value: 40, color: "bg-blue-500", icon: "🚗" },
-    { label: "Stationary", value: 30, color: "bg-green-500", icon: "🏭" },
-    { label: "Refrigerants", value: 30, color: "bg-orange-500", icon: "❄️" },
+    { label: "Mobile Combustion", value: scope1Kg ? Math.round((scope1Results?.mobile?.kgCO2e || 0) / scope1Kg * 100) : 0, color: "bg-blue-500", icon: "🚗" },
+    { label: "Stationary", value: scope1Kg ? Math.round((scope1Results?.stationary?.kgCO2e || 0) / scope1Kg * 100) : 0, color: "bg-green-500", icon: "🏭" },
+    { label: "Refrigerants", value: scope1Kg ? Math.round((scope1Results?.refrigerants?.kgCO2e || 0) / scope1Kg * 100) : 0, color: "bg-orange-500", icon: "❄️" },
+    { label: "Fugitive", value: scope1Kg ? Math.round((scope1Results?.fugitive?.kgCO2e || 0) / scope1Kg * 100) : 0, color: "bg-red-500", icon: "💨" },
   ];
 
   const scope2Breakdown = [
-    { label: "Electricity", value: 60, color: "bg-purple-500", icon: "⚡" },
-    { label: "Heating/Cooling", value: 40, color: "bg-yellow-500", icon: "🔥" },
+    { label: "Electricity", value: scope2Kg ? Math.round((scope2Results?.electricity?.kgCO2e || 0) / scope2Kg * 100) : 0, color: "bg-purple-500", icon: "⚡" },
+    { label: "Heating/Cooling", value: scope2Kg ? Math.round((scope2Results?.heating?.kgCO2e || 0) / scope2Kg * 100) : 0, color: "bg-yellow-500", icon: "🔥" },
+    { label: "Renewables", value: scope2Kg ? Math.round((scope2Results?.renewables?.kgCO2e || 0) / scope2Kg * 100) : 0, color: "bg-green-500", icon: "🌱" },
   ];
 
-  const totalEmissions = scope1Total + scope2Total;
-
-  // Goal tracking data
-  const baselineYear = 2020;
-  const baseEmissions = 1250; // Baseline emissions in tCO₂e
+  const baseEmissions = 1250;
+  const targetReduction = 50;
   const targetYear = 2030;
-  const targetReduction = 50; // 50% reduction by 2030
-  const currentYear = 2025;
-  
-  // Calculate progress
-  const currentEmissions = totalEmissions || 980; // Use real data or fallback
-  const reductionSoFar = ((baseEmissions - currentEmissions) / baseEmissions) * 100;
+  const currentYear = 2026;
+  const reductionSoFar = baseEmissions > 0 ? ((baseEmissions - currentEmissions) / baseEmissions) * 100 : 0;
   const remainingYears = targetYear - currentYear;
   const requiredAnnualReduction = (targetReduction - reductionSoFar) / remainingYears;
-  
-  // Milestone tracking
+
   const milestones = [
     { year: 2025, target: 15, achieved: 12, status: "in-progress" },
     { year: 2026, target: 22, achieved: 0, status: "upcoming" },
@@ -70,11 +73,10 @@ export default function DashboardPage() {
           <h1>Emissions Dashboard</h1>
           <p>Track your organization's carbon footprint in real-time</p>
         </div>
-        
         <div className="header-actions">
           <button className="date-range-btn">
             <FiCalendar />
-            <span>Jan 2024 - Mar 2024</span>
+            <span>{new Date().getFullYear()} Overview</span>
           </button>
           <button className="export-btn">
             <FiDownload />
@@ -88,24 +90,30 @@ export default function DashboardPage() {
         <div className="stat-item">
           <BiLeaf className="stat-icon" />
           <div>
-            <span className="stat-label">Carbon Intensity</span>
-            <span className="stat-value">24.5 tCO₂e/£M</span>
+            <span className="stat-label">Total Scope 1</span>
+            <span className="stat-value">
+              {scope1Kg > 0 ? `${(scope1Kg / 1000).toFixed(2)} tCO₂e` : "—"}
+            </span>
           </div>
         </div>
         <div className="stat-divider"></div>
         <div className="stat-item">
           <FiTrendingUp className="stat-icon" />
           <div>
-            <span className="stat-label">vs Last Period</span>
-            <span className="stat-value text-green-600">-8.2%</span>
+            <span className="stat-label">Total Scope 2</span>
+            <span className="stat-value">
+              {scope2Kg > 0 ? `${(scope2Kg / 1000).toFixed(2)} tCO₂e` : "—"}
+            </span>
           </div>
         </div>
         <div className="stat-divider"></div>
         <div className="stat-item">
           <FiZap className="stat-icon" />
           <div>
-            <span className="stat-label">Renewable Share</span>
-            <span className="stat-value">42%</span>
+            <span className="stat-label">Combined Total</span>
+            <span className="stat-value">
+              {totalKg > 0 ? `${totalTonnes.toFixed(2)} tCO₂e` : "—"}
+            </span>
           </div>
         </div>
       </div>
@@ -113,9 +121,8 @@ export default function DashboardPage() {
       {/* Main Metrics Cards */}
       <DashboardMetrics />
 
-      {/* Enhanced Progress Tracking Section */}
+      {/* Progress Tracking Section */}
       <div className="progress-section">
-        {/* Main Goal Card */}
         <Card className="goal-card">
           <div className="goal-header">
             <div className="goal-title">
@@ -127,34 +134,35 @@ export default function DashboardPage() {
             </div>
             <div className="goal-badge">
               <FiAward />
-              <span>On Track</span>
+              <span>{reductionSoFar >= 0 ? "On Track" : "Off Track"}</span>
             </div>
           </div>
 
           <div className="goal-visual">
             <div className="goal-stats">
               <div className="goal-stat-item">
-                <span className="stat-label">Base Year ({baselineYear})</span>
+                <span className="stat-label">Base Year (2020)</span>
                 <span className="stat-value">{baseEmissions} tCO₂e</span>
               </div>
               <div className="goal-stat-item">
                 <span className="stat-label">Current</span>
-                <span className="stat-value">{currentEmissions} tCO₂e</span>
+                <span className="stat-value">
+                  {currentEmissions > 0 ? `${currentEmissions.toFixed(2)} tCO₂e` : "—"}
+                </span>
               </div>
               <div className="goal-stat-item">
                 <span className="stat-label">Target ({targetYear})</span>
-                <span className="stat-value">{baseEmissions * (1 - targetReduction/100)} tCO₂e</span>
+                <span className="stat-value">{baseEmissions * (1 - targetReduction / 100)} tCO₂e</span>
               </div>
             </div>
 
-            {/* Main Progress Bar */}
             <div className="progress-container">
               <div className="progress-track">
-                <div 
-                  className="progress-fill"
-                  style={{ width: "100%" }}
-                />
-                <div className="progress-marker" style={{ left: `${(reductionSoFar / targetReduction) * 100}%` }}>
+                <div className="progress-fill" style={{ width: "100%" }} />
+                <div
+                  className="progress-marker"
+                  style={{ left: `${Math.min(Math.max((reductionSoFar / targetReduction) * 100, 0), 100)}%` }}
+                >
                   <span className="marker-label">{reductionSoFar.toFixed(1)}%</span>
                 </div>
               </div>
@@ -172,7 +180,7 @@ export default function DashboardPage() {
               </div>
               <div className="metric-divider"></div>
               <div className="metric">
-                <span className="metric-value">{(targetReduction - reductionSoFar).toFixed(1)}%</span>
+                <span className="metric-value">{Math.max(0, targetReduction - reductionSoFar).toFixed(1)}%</span>
                 <span className="metric-label">Remaining</span>
               </div>
               <div className="metric-divider"></div>
@@ -186,7 +194,10 @@ export default function DashboardPage() {
           <div className="goal-footer">
             <FiAlertCircle className="footer-icon" />
             <div className="footer-text">
-              <strong>You're on track!</strong> Current reduction rate exceeds required annual target.
+              {currentEmissions > 0
+                ? <><strong>You're on track!</strong> Current reduction rate exceeds required annual target.</>
+                : <><strong>No data yet.</strong> Submit Scope 1 and Scope 2 data to track progress.</>
+              }
             </div>
           </div>
         </Card>
@@ -197,18 +208,17 @@ export default function DashboardPage() {
             <FiClock className="milestone-icon" />
             <h3>2030 Milestone Tracker</h3>
           </div>
-          
           <div className="timeline">
             {milestones.map((milestone, index) => (
               <div key={index} className="timeline-item">
                 <div className={`timeline-dot ${milestone.status}`}>
-                  {milestone.status === 'completed' && '✓'}
+                  {milestone.status === "completed" && "✓"}
                 </div>
                 <div className="timeline-content">
                   <div className="timeline-year">{milestone.year}</div>
                   <div className="timeline-progress">
                     <div className="timeline-bar">
-                      <div 
+                      <div
                         className={`timeline-fill ${milestone.status}`}
                         style={{ width: `${(milestone.achieved / milestone.target) * 100}%` }}
                       />
@@ -229,18 +239,15 @@ export default function DashboardPage() {
 
       {/* Charts Grid */}
       <div className="charts-grid">
-        {/* Trend Line Chart */}
         <Card className="chart-card large">
           <div className="chart-header">
             <h3>Emissions Trend</h3>
             <div className="chart-legend">
               <span className="legend-item">
-                <span className="legend-dot scope1"></span>
-                Scope 1
+                <span className="legend-dot scope1"></span>Scope 1
               </span>
               <span className="legend-item">
-                <span className="legend-dot scope2"></span>
-                Scope 2
+                <span className="legend-dot scope2"></span>Scope 2
               </span>
             </div>
           </div>
@@ -249,7 +256,6 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Pie Chart */}
         <Card className="chart-card">
           <div className="chart-header">
             <h3>Emissions Distribution</h3>
@@ -259,7 +265,15 @@ export default function DashboardPage() {
           </div>
           <div className="chart-insight">
             <BiTrendingUp />
-            <span>Scope 1 is your largest contributor</span>
+            <span>
+              {scope1Kg > scope2Kg && scope1Kg > 0
+                ? "Scope 1 is your largest contributor"
+                : scope2Kg > scope1Kg
+                ? "Scope 2 is your largest contributor"
+                : totalKg > 0
+                ? "Scope 1 and 2 are equal"
+                : "Submit data to see distribution"}
+            </span>
           </div>
         </Card>
       </div>
@@ -274,27 +288,33 @@ export default function DashboardPage() {
       <Card className="activity-card">
         <h3>Recent Activity</h3>
         <div className="activity-list">
-          <div className="activity-item">
-            <div className="activity-icon">📊</div>
-            <div className="activity-content">
-              <p><strong>Monthly data updated</strong> - March 2024</p>
-              <span className="activity-time">2 hours ago</span>
+          {scope1Kg > 0 && (
+            <div className="activity-item">
+              <div className="activity-icon">🏭</div>
+              <div className="activity-content">
+                <p><strong>Scope 1 data submitted</strong> — {(scope1Kg / 1000).toFixed(2)} tCO₂e</p>
+                <span className="activity-time">{new Date().getFullYear()} reporting period</span>
+              </div>
             </div>
-          </div>
-          <div className="activity-item">
-            <div className="activity-icon">🚗</div>
-            <div className="activity-content">
-              <p><strong>New vehicle added</strong> - Tesla Model 3</p>
-              <span className="activity-time">Yesterday</span>
+          )}
+          {scope2Kg > 0 && (
+            <div className="activity-item">
+              <div className="activity-icon">⚡</div>
+              <div className="activity-content">
+                <p><strong>Scope 2 data submitted</strong> — {(scope2Kg / 1000).toFixed(2)} tCO₂e</p>
+                <span className="activity-time">{new Date().getFullYear()} reporting period</span>
+              </div>
             </div>
-          </div>
-          <div className="activity-item">
-            <div className="activity-icon">⚡</div>
-            <div className="activity-content">
-              <p><strong>Renewable certificate uploaded</strong> - 150 RECs</p>
-              <span className="activity-time">3 days ago</span>
+          )}
+          {totalKg === 0 && (
+            <div className="activity-item">
+              <div className="activity-icon">📋</div>
+              <div className="activity-content">
+                <p><strong>No activity yet</strong> — Submit Scope 1 and Scope 2 data to get started</p>
+                <span className="activity-time">Awaiting data</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Card>
 
@@ -305,7 +325,6 @@ export default function DashboardPage() {
           margin: 0 auto;
         }
 
-        /* Header */
         .dashboard-header {
           display: flex;
           justify-content: space-between;
@@ -351,7 +370,6 @@ export default function DashboardPage() {
           background: #F0FDF4;
         }
 
-        /* Stats Banner */
         .stats-banner {
           display: flex;
           align-items: center;
@@ -389,17 +407,12 @@ export default function DashboardPage() {
           color: #14532D;
         }
 
-        .text-green-600 {
-          color: #16A34A;
-        }
-
         .stat-divider {
           width: 1px;
           height: 40px;
           background: rgba(34, 197, 94, 0.2);
         }
 
-        /* Progress Section */
         .progress-section {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -407,7 +420,6 @@ export default function DashboardPage() {
           margin-bottom: 24px;
         }
 
-        /* Goal Card */
         .goal-card {
           background: linear-gradient(135deg, #14532D 0%, #166534 100%);
           color: white;
@@ -482,7 +494,6 @@ export default function DashboardPage() {
           font-weight: 600;
         }
 
-        /* Progress Container */
         .progress-container {
           margin-bottom: 24px;
           position: relative;
@@ -501,7 +512,6 @@ export default function DashboardPage() {
           background: linear-gradient(90deg, #4ADE80, #22C55E);
           border-radius: 6px;
           transition: width 0.3s ease;
-          position: relative;
         }
 
         .progress-marker {
@@ -543,7 +553,6 @@ export default function DashboardPage() {
           font-weight: 500;
         }
 
-        /* Goal Metrics */
         .goal-metrics {
           display: flex;
           align-items: center;
@@ -589,9 +598,9 @@ export default function DashboardPage() {
         .footer-icon {
           color: #4ADE80;
           font-size: 18px;
+          flex-shrink: 0;
         }
 
-        /* Milestone Card */
         .milestone-card {
           background: white;
           padding: 24px;
@@ -644,30 +653,16 @@ export default function DashboardPage() {
           margin-top: 2px;
         }
 
-        .timeline-dot.completed {
-          background: #22C55E;
-          border-color: #22C55E;
-        }
-
-        .timeline-dot.in-progress {
-          background: #F59E0B;
-          border-color: #F59E0B;
-          animation: pulse 2s infinite;
-        }
+        .timeline-dot.completed { background: #22C55E; border-color: #22C55E; }
+        .timeline-dot.in-progress { background: #F59E0B; border-color: #F59E0B; animation: pulse 2s infinite; }
+        .timeline-dot.upcoming { background: white; border-color: #E5E7EB; }
 
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
         }
 
-        .timeline-dot.upcoming {
-          background: white;
-          border-color: #E5E7EB;
-        }
-
-        .timeline-content {
-          flex: 1;
-        }
+        .timeline-content { flex: 1; }
 
         .timeline-year {
           font-weight: 600;
@@ -695,30 +690,17 @@ export default function DashboardPage() {
           transition: width 0.3s ease;
         }
 
-        .timeline-fill.completed {
-          background: #22C55E;
-        }
-
-        .timeline-fill.in-progress {
-          background: #F59E0B;
-        }
+        .timeline-fill.completed { background: #22C55E; }
+        .timeline-fill.in-progress { background: #F59E0B; }
 
         .timeline-stats {
           min-width: 120px;
           font-size: 12px;
         }
 
-        .timeline-target {
-          color: #6B7280;
-          margin-right: 8px;
-        }
+        .timeline-target { color: #6B7280; margin-right: 8px; }
+        .timeline-achieved { color: #22C55E; font-weight: 500; }
 
-        .timeline-achieved {
-          color: #22C55E;
-          font-weight: 500;
-        }
-
-        /* Charts Grid */
         .charts-grid {
           display: grid;
           grid-template-columns: 2fr 1fr;
@@ -733,9 +715,7 @@ export default function DashboardPage() {
           border: 1px solid rgba(34, 197, 94, 0.1);
         }
 
-        .chart-card.large {
-          min-height: 400px;
-        }
+        .chart-card.large { min-height: 400px; }
 
         .chart-header {
           display: flex;
@@ -751,10 +731,7 @@ export default function DashboardPage() {
           margin: 0;
         }
 
-        .chart-legend {
-          display: flex;
-          gap: 16px;
-        }
+        .chart-legend { display: flex; gap: 16px; }
 
         .legend-item {
           display: flex;
@@ -764,24 +741,11 @@ export default function DashboardPage() {
           color: #4B5563;
         }
 
-        .legend-dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-        }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .legend-dot.scope1 { background: #0088FE; }
+        .legend-dot.scope2 { background: #FF8042; }
 
-        .legend-dot.scope1 {
-          background: #0088FE;
-        }
-
-        .legend-dot.scope2 {
-          background: #FF8042;
-        }
-
-        .chart-wrapper {
-          height: 300px;
-          width: 100%;
-        }
+        .chart-wrapper { height: 300px; width: 100%; }
 
         .pie-chart-wrapper {
           height: 200px;
@@ -802,7 +766,6 @@ export default function DashboardPage() {
           color: #15803D;
         }
 
-        /* Breakdown Grid */
         .breakdown-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -810,7 +773,6 @@ export default function DashboardPage() {
           margin-bottom: 24px;
         }
 
-        /* Activity Card */
         .activity-card {
           background: white;
           border: 1px solid rgba(34, 197, 94, 0.1);
@@ -823,11 +785,7 @@ export default function DashboardPage() {
           margin: 0 0 16px;
         }
 
-        .activity-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
+        .activity-list { display: flex; flex-direction: column; gap: 12px; }
 
         .activity-item {
           display: flex;
@@ -840,10 +798,7 @@ export default function DashboardPage() {
           transition: all 0.2s ease;
         }
 
-        .activity-item:hover {
-          transform: translateX(4px);
-          background: #F0FDF4;
-        }
+        .activity-item:hover { transform: translateX(4px); background: #F0FDF4; }
 
         .activity-icon {
           width: 40px;
@@ -854,11 +809,10 @@ export default function DashboardPage() {
           align-items: center;
           justify-content: center;
           font-size: 20px;
+          flex-shrink: 0;
         }
 
-        .activity-content {
-          flex: 1;
-        }
+        .activity-content { flex: 1; }
 
         .activity-content p {
           margin: 0 0 4px;
@@ -866,58 +820,21 @@ export default function DashboardPage() {
           color: #374151;
         }
 
-        .activity-time {
-          font-size: 12px;
-          color: #6B7280;
-        }
+        .activity-time { font-size: 12px; color: #6B7280; }
 
-        /* Responsive */
         @media (max-width: 1024px) {
-          .progress-section,
-          .charts-grid {
-            grid-template-columns: 1fr;
-          }
+          .progress-section, .charts-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {
-          .dashboard-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .stats-banner {
-            flex-direction: column;
-            gap: 16px;
-          }
-
-          .stat-divider {
-            width: 80%;
-            height: 1px;
-          }
-
-          .goal-stats {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-
-          .goal-metrics {
-            flex-direction: column;
-            gap: 12px;
-          }
-
-          .metric-divider {
-            width: 80%;
-            height: 1px;
-          }
-
-          .breakdown-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .timeline-progress {
-            flex-direction: column;
-            align-items: flex-start;
-          }
+          .dashboard-header { flex-direction: column; align-items: flex-start; }
+          .stats-banner { flex-direction: column; gap: 16px; }
+          .stat-divider { width: 80%; height: 1px; }
+          .goal-stats { grid-template-columns: 1fr; gap: 12px; }
+          .goal-metrics { flex-direction: column; gap: 12px; }
+          .metric-divider { width: 80%; height: 1px; }
+          .breakdown-grid { grid-template-columns: 1fr; }
+          .timeline-progress { flex-direction: column; align-items: flex-start; }
         }
       `}</style>
     </div>

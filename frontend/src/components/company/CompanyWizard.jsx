@@ -13,8 +13,13 @@ import SecondaryButton from "../ui/SecondaryButton";
 import Card from "../ui/Card";
 import { FiCheck, FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import { BiLeaf } from "react-icons/bi";
+import { useAuthStore } from "../../store/authStore";
+import { useCompanyStore } from "../../store/companyStore";
+import { useNavigate } from "react-router-dom";
+
 
 export default function CompanyWizard() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [companyData, setCompanyData] = useState({
     name: "",
@@ -26,6 +31,30 @@ export default function CompanyWizard() {
     revenue: "",
     locations: [],
   });
+const { company, updateCompany } = useCompanyStore();
+const token = useAuthStore((state) => state.token);
+
+// If company exists, map it to the wizard data format
+const existingData = company ? {
+  name: company.basicInfo?.name || "",
+  description: company.basicInfo?.description || "",
+  region: company.basicInfo?.region || "",
+  country: company.locations?.[0]?.country || "",
+  industry: company.basicInfo?.industry || "",
+  employees: company.basicInfo?.employees || "",
+  revenue: company.basicInfo?.revenue || "",
+  locations: company.locations || [],
+} : null;
+
+const handleUpdateField = async (field, value) => {
+  updateField(field, value);
+  // Also sync to backend
+  if (token && company) {
+    await updateCompany(token, { [field]: value });
+  }
+};  const { createCompany, loading } = useCompanyStore();
+  console.log("Token in wizard:", token);
+
 
   const steps = [
     { id: 1, label: "Company Info", icon: "🏢" },
@@ -42,9 +71,33 @@ export default function CompanyWizard() {
     setCompanyData((prev) => ({ ...prev, [field]: value }));
   }
 
-  function nextStep() {
-    if (step < steps.length) setStep((prev) => prev + 1);
+  
+
+  async function nextStep() {
+  if (step < steps.length) {
+    setStep((prev) => prev + 1);
+  } else {
+    // Final step — submit to backend
+    const payload = {
+      name: companyData.name,
+      industry: companyData.industry,
+      employees: Number(companyData.employees),
+      revenue: Number(companyData.revenue),
+      fiscalYear: new Date().getFullYear(),
+      locations: companyData.locations.map((loc) => ({
+        city: loc.city || loc.name,
+        country: companyData.country,
+        isPrimary: loc.isPrimary || false,
+      })),
+    };
+    const result = await createCompany(token, payload);
+    if (result.success) {
+      navigate("/dashboard");
+    } else {
+      alert("Failed to save company: " + result.error);
+    }
   }
+}
 
   function prevStep() {
     if (step > 1) setStep((prev) => prev - 1);
@@ -64,6 +117,14 @@ export default function CompanyWizard() {
       default: return true;
     }
   };
+
+  if (existingData) {
+  return (
+    <div className="wizard-container">
+      <SetupSummary data={existingData} updateField={handleUpdateField} />
+    </div>
+  );
+}
 
   return (
     <div className="wizard-container">

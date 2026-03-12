@@ -17,24 +17,25 @@ import {
 } from "react-icons/fi";
 import { BiLeaf, BiSupport } from "react-icons/bi";
 import { GiEarthAmerica } from "react-icons/gi";
+import { useAuthStore } from "../store/authStore";
 
 export default function ContactPage() {
+  const user = useAuthStore((s) => s.user);
+
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: user?.displayName || "",
+    email: user?.email || "",
     subject: "",
     message: ""
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
   const validateForm = () => {
@@ -47,37 +48,44 @@ export default function ContactPage() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
-    // In real app, send to API here
-    console.log("Form submitted:", formData);
+
+    setLoading(true);
+
+    // TODO: Replace with real API call when /api/contact endpoint is ready:
+    // await fetch("/api/contact", { method: "POST", body: JSON.stringify(formData) });
+
+    // For now, simulate a short delay then show success
+    await new Promise((res) => setTimeout(res, 800));
+
+    setLoading(false);
     setSubmitted(true);
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({ name: "", email: "", subject: "", message: "" });
-    }, 3000);
+  };
+
+  const handleSendAnother = () => {
+    setSubmitted(false);
+    setFormData({
+      name: user?.displayName || "",
+      email: user?.email || "",
+      subject: "",
+      message: "",
+    });
   };
 
   return (
     <div className="contact-container">
-      {/* Back to Help Link */}
       <Link to="/help" className="back-link">
         <FiArrowLeft /> Back to Help Center
       </Link>
 
-      {/* Header */}
       <div className="contact-header">
-        <div className="header-icon">
-          <BiSupport />
-        </div>
+        <div className="header-icon"><BiSupport /></div>
         <h1>Contact Us</h1>
         <p>We're here to help with any questions or concerns</p>
       </div>
@@ -86,63 +94,62 @@ export default function ContactPage() {
         {/* Contact Form */}
         <div className="contact-form-card">
           <h2>Send us a message</h2>
-          
+
           {submitted ? (
             <div className="success-message">
               <FiCheckCircle className="success-icon" />
               <h3>Message Sent!</h3>
               <p>Thank you for contacting us. We'll get back to you within 24 hours.</p>
-              <button onClick={() => setSubmitted(false)} className="send-another-btn">
+              <button onClick={handleSendAnother} className="send-another-btn">
                 Send Another Message
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="contact-form">
-              <div className="form-group">
-                <label htmlFor="name">
-                  <FiUser className="label-icon" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="John Doe"
-                  className={errors.name ? 'error' : ''}
-                />
-                {errors.name && <span className="error-text">{errors.name}</span>}
-              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="name">
+                    <FiUser className="label-icon" />Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                    className={errors.name ? "error" : ""}
+                  />
+                  {errors.name && <span className="error-text">{errors.name}</span>}
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="email">
-                  <FiMail className="label-icon" />
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="john@company.com"
-                  className={errors.email ? 'error' : ''}
-                />
-                {errors.email && <span className="error-text">{errors.email}</span>}
+                <div className="form-group">
+                  <label htmlFor="email">
+                    <FiMail className="label-icon" />Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="john@company.com"
+                    className={errors.email ? "error" : ""}
+                  />
+                  {errors.email && <span className="error-text">{errors.email}</span>}
+                </div>
               </div>
 
               <div className="form-group">
                 <label htmlFor="subject">
-                  <FiMessageSquare className="label-icon" />
-                  Subject
+                  <FiMessageSquare className="label-icon" />Subject
                 </label>
                 <select
                   id="subject"
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  className={errors.subject ? 'error' : ''}
+                  className={errors.subject ? "error" : ""}
                 >
                   <option value="">Select a subject</option>
                   <option value="technical">Technical Support</option>
@@ -156,8 +163,7 @@ export default function ContactPage() {
 
               <div className="form-group">
                 <label htmlFor="message">
-                  <BiLeaf className="label-icon" />
-                  Message
+                  <BiLeaf className="label-icon" />Message
                 </label>
                 <textarea
                   id="message"
@@ -166,13 +172,17 @@ export default function ContactPage() {
                   onChange={handleChange}
                   placeholder="How can we help you?"
                   rows="5"
-                  className={errors.message ? 'error' : ''}
+                  className={errors.message ? "error" : ""}
                 />
                 {errors.message && <span className="error-text">{errors.message}</span>}
               </div>
 
-              <button type="submit" className="submit-btn">
-                <FiSend /> Send Message
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? (
+                  <span className="loading-dots">Sending</span>
+                ) : (
+                  <><FiSend /> Send Message</>
+                )}
               </button>
             </form>
           )}
@@ -184,9 +194,7 @@ export default function ContactPage() {
 
           <div className="info-list">
             <div className="info-item">
-              <div className="info-icon">
-                <FiMail />
-              </div>
+              <div className="info-icon"><FiMail /></div>
               <div>
                 <h4>Email</h4>
                 <a href="mailto:support@esgcalculator.com">support@esgcalculator.com</a>
@@ -195,9 +203,7 @@ export default function ContactPage() {
             </div>
 
             <div className="info-item">
-              <div className="info-icon">
-                <FiPhone />
-              </div>
+              <div className="info-icon"><FiPhone /></div>
               <div>
                 <h4>Phone</h4>
                 <a href="tel:+1234567890">+1 (234) 567-890</a>
@@ -206,12 +212,10 @@ export default function ContactPage() {
             </div>
 
             <div className="info-item">
-              <div className="info-icon">
-                <FiMapPin />
-              </div>
+              <div className="info-icon"><FiMapPin /></div>
               <div>
                 <h4>Office</h4>
-                <p>123 Green Street, Suite 100<br />San Francisco, CA 94105</p>
+                <p>123 Green Street, Suite 100<br />Dubai, UAE</p>
               </div>
             </div>
           </div>
@@ -220,7 +224,7 @@ export default function ContactPage() {
             <FiClock className="hours-icon" />
             <div>
               <h4>Support Hours</h4>
-              <p>Monday - Friday: 9:00 AM - 6:00 PM EST</p>
+              <p>Monday - Friday: 9:00 AM - 6:00 PM GST</p>
               <p>Saturday - Sunday: Closed</p>
             </div>
           </div>
@@ -228,18 +232,10 @@ export default function ContactPage() {
           <div className="social-links">
             <h4>Connect with us</h4>
             <div className="social-icons">
-              <a href="#" className="social-icon twitter">
-                <FiTwitter />
-              </a>
-              <a href="#" className="social-icon linkedin">
-                <FiLinkedin />
-              </a>
-              <a href="#" className="social-icon github">
-                <FiGithub />
-              </a>
-              <a href="#" className="social-icon earth">
-                <GiEarthAmerica />
-              </a>
+              <a href="#" className="social-icon twitter"><FiTwitter /></a>
+              <a href="#" className="social-icon linkedin"><FiLinkedin /></a>
+              <a href="#" className="social-icon github"><FiGithub /></a>
+              <a href="#" className="social-icon earth"><GiEarthAmerica /></a>
             </div>
           </div>
 
@@ -260,7 +256,6 @@ export default function ContactPage() {
           padding: 40px 20px;
         }
 
-        /* Back Link */
         .back-link {
           display: inline-flex;
           align-items: center;
@@ -273,12 +268,8 @@ export default function ContactPage() {
           transition: all 0.2s ease;
         }
 
-        .back-link:hover {
-          gap: 12px;
-          color: #14532D;
-        }
+        .back-link:hover { gap: 12px; color: #14532D; }
 
-        /* Header */
         .contact-header {
           text-align: center;
           margin-bottom: 50px;
@@ -303,12 +294,8 @@ export default function ContactPage() {
           margin: 0 0 8px;
         }
 
-        .contact-header p {
-          color: #166534;
-          font-size: 16px;
-        }
+        .contact-header p { color: #166534; font-size: 16px; }
 
-        /* Contact Grid */
         .contact-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -317,8 +304,8 @@ export default function ContactPage() {
           margin: 0 auto;
         }
 
-        /* Form Card */
-        .contact-form-card {
+        .contact-form-card,
+        .contact-info-card {
           background: white;
           border-radius: 24px;
           padding: 40px;
@@ -326,13 +313,13 @@ export default function ContactPage() {
           border: 1px solid rgba(34,197,94,0.2);
         }
 
-        .contact-form-card h2 {
+        .contact-form-card h2,
+        .contact-info-card h2 {
           color: #14532D;
           font-size: 24px;
           margin: 0 0 30px;
         }
 
-        /* Success Message */
         .success-message {
           text-align: center;
           padding: 40px 20px;
@@ -350,16 +337,8 @@ export default function ContactPage() {
           to { transform: scale(1); }
         }
 
-        .success-message h3 {
-          color: #14532D;
-          font-size: 24px;
-          margin: 0 0 10px;
-        }
-
-        .success-message p {
-          color: #4B5563;
-          margin: 0 0 20px;
-        }
+        .success-message h3 { color: #14532D; font-size: 24px; margin: 0 0 10px; }
+        .success-message p { color: #4B5563; margin: 0 0 20px; }
 
         .send-another-btn {
           padding: 12px 24px;
@@ -377,18 +356,15 @@ export default function ContactPage() {
           box-shadow: 0 10px 20px rgba(34,197,94,0.3);
         }
 
-        /* Form */
-        .contact-form {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
+        .contact-form { display: flex; flex-direction: column; gap: 20px; }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
         }
 
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
 
         .form-group label {
           display: flex;
@@ -399,9 +375,7 @@ export default function ContactPage() {
           color: #374151;
         }
 
-        .label-icon {
-          color: #22C55E;
-        }
+        .label-icon { color: #22C55E; }
 
         .form-group input,
         .form-group select,
@@ -425,15 +399,9 @@ export default function ContactPage() {
 
         .form-group input.error,
         .form-group select.error,
-        .form-group textarea.error {
-          border-color: #EF4444;
-        }
+        .form-group textarea.error { border-color: #EF4444; }
 
-        .error-text {
-          color: #EF4444;
-          font-size: 12px;
-          margin-top: 4px;
-        }
+        .error-text { color: #EF4444; font-size: 12px; }
 
         .submit-btn {
           display: flex;
@@ -452,37 +420,28 @@ export default function ContactPage() {
           margin-top: 10px;
         }
 
-        .submit-btn:hover {
+        .submit-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 10px 20px rgba(34,197,94,0.3);
         }
 
-        /* Info Card */
-        .contact-info-card {
-          background: white;
-          border-radius: 24px;
-          padding: 40px;
-          box-shadow: 0 10px 30px rgba(0,40,0,0.1);
-          border: 1px solid rgba(34,197,94,0.2);
+        .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        @keyframes ellipsis {
+          0% { content: "Sending"; }
+          33% { content: "Sending."; }
+          66% { content: "Sending.."; }
+          100% { content: "Sending..."; }
         }
 
-        .contact-info-card h2 {
-          color: #14532D;
-          font-size: 24px;
-          margin: 0 0 30px;
+        .loading-dots::after {
+          content: "";
+          animation: ellipsis 1.2s steps(4, end) infinite;
         }
 
-        .info-list {
-          display: flex;
-          flex-direction: column;
-          gap: 30px;
-          margin-bottom: 30px;
-        }
+        .info-list { display: flex; flex-direction: column; gap: 30px; margin-bottom: 30px; }
 
-        .info-item {
-          display: flex;
-          gap: 16px;
-        }
+        .info-item { display: flex; gap: 16px; }
 
         .info-icon {
           width: 48px;
@@ -497,31 +456,12 @@ export default function ContactPage() {
           flex-shrink: 0;
         }
 
-        .info-item h4 {
-          color: #14532D;
-          font-size: 16px;
-          margin: 0 0 6px;
-        }
+        .info-item h4 { color: #14532D; font-size: 16px; margin: 0 0 6px; }
+        .info-item a { color: #22C55E; text-decoration: none; font-size: 15px; display: block; margin-bottom: 4px; }
+        .info-item a:hover { text-decoration: underline; }
+        .info-item p { color: #4B5563; font-size: 14px; margin: 0; }
+        .info-note { color: #6B7280; font-size: 13px; margin: 0; }
 
-        .info-item a {
-          color: #22C55E;
-          text-decoration: none;
-          font-size: 15px;
-          display: block;
-          margin-bottom: 4px;
-        }
-
-        .info-item a:hover {
-          text-decoration: underline;
-        }
-
-        .info-note {
-          color: #6B7280;
-          font-size: 13px;
-          margin: 0;
-        }
-
-        /* Office Hours */
         .office-hours {
           display: flex;
           gap: 16px;
@@ -531,39 +471,13 @@ export default function ContactPage() {
           margin-bottom: 30px;
         }
 
-        .hours-icon {
-          font-size: 24px;
-          color: #22C55E;
-          flex-shrink: 0;
-        }
+        .hours-icon { font-size: 24px; color: #22C55E; flex-shrink: 0; }
+        .office-hours h4 { color: #14532D; font-size: 16px; margin: 0 0 8px; }
+        .office-hours p { color: #4B5563; font-size: 14px; margin: 4px 0; }
 
-        .office-hours h4 {
-          color: #14532D;
-          font-size: 16px;
-          margin: 0 0 8px;
-        }
-
-        .office-hours p {
-          color: #4B5563;
-          font-size: 14px;
-          margin: 4px 0;
-        }
-
-        /* Social Links */
-        .social-links {
-          margin-bottom: 30px;
-        }
-
-        .social-links h4 {
-          color: #14532D;
-          font-size: 16px;
-          margin: 0 0 16px;
-        }
-
-        .social-icons {
-          display: flex;
-          gap: 12px;
-        }
+        .social-links { margin-bottom: 30px; }
+        .social-links h4 { color: #14532D; font-size: 16px; margin: 0 0 16px; }
+        .social-icons { display: flex; gap: 12px; }
 
         .social-icon {
           width: 44px;
@@ -575,29 +489,15 @@ export default function ContactPage() {
           font-size: 20px;
           color: white;
           transition: all 0.2s ease;
+          text-decoration: none;
         }
 
-        .social-icon:hover {
-          transform: translateY(-3px);
-        }
+        .social-icon:hover { transform: translateY(-3px); }
+        .social-icon.twitter { background: #1DA1F2; }
+        .social-icon.linkedin { background: #0077B5; }
+        .social-icon.github { background: #333; }
+        .social-icon.earth { background: linear-gradient(135deg, #15803D, #22C55E); }
 
-        .social-icon.twitter {
-          background: #1DA1F2;
-        }
-
-        .social-icon.linkedin {
-          background: #0077B5;
-        }
-
-        .social-icon.github {
-          background: #333;
-        }
-
-        .social-icon.earth {
-          background: linear-gradient(135deg, #15803D, #22C55E);
-        }
-
-        /* Emergency Note */
         .emergency-note {
           display: flex;
           align-items: center;
@@ -608,39 +508,16 @@ export default function ContactPage() {
           border: 1px solid #F59E0B;
         }
 
-        .emergency-icon {
-          font-size: 32px;
-          color: #F59E0B;
-        }
+        .emergency-icon { font-size: 32px; color: #F59E0B; flex-shrink: 0; }
+        .emergency-note p { color: #92400E; font-size: 14px; margin: 0; }
 
-        .emergency-note p {
-          color: #92400E;
-          font-size: 14px;
-          margin: 0;
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-          .contact-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .contact-form-card,
-          .contact-info-card {
-            padding: 30px 20px;
-          }
-
-          .contact-header h1 {
-            font-size: 28px;
-          }
-
-          .info-item {
-            flex-direction: column;
-          }
-
-          .social-icons {
-            flex-wrap: wrap;
-          }
+          .contact-grid { grid-template-columns: 1fr; }
+          .form-row { grid-template-columns: 1fr; }
+          .contact-form-card, .contact-info-card { padding: 30px 20px; }
+          .contact-header h1 { font-size: 28px; }
+          .info-item { flex-direction: column; }
+          .social-icons { flex-wrap: wrap; }
         }
       `}</style>
     </div>

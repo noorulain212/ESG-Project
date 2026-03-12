@@ -7,7 +7,9 @@ import { BiLeaf } from "react-icons/bi";
 import { GiEarthAmerica, GiForest, GiPlantSeed } from "react-icons/gi";
 import { MdOutlineEnergySavingsLeaf } from "react-icons/md";
 import { RiTreeLine } from "react-icons/ri";
-
+import { useAuthStore } from "../store/authStore";
+import { useCompanyStore } from "../store/companyStore";
+import { useEmissionStore } from "../store/emissionStore";
 import loginBg from "../assets/backgrounds/login.jpg";
 
 export default function LoginPage() {
@@ -16,15 +18,51 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const { login, loading, error, clearError } = useAuthStore();
+  const { fetchCompany } = useCompanyStore();
+
+  useEffect(() => {
+    return () => clearError();
+  }, []);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+    const result = await login(email, password);
+    if (result.success) {
+      const token = useAuthStore.getState().token;
+      const companyResult = await fetchCompany(token);
+      if (companyResult.success) {
+        navigate("/dashboard");
+      } else {
+        navigate("/setup");
+      }
+    }
+
+   const { token: authToken } = useAuthStore.getState();
+   const companyResult = await fetchCompany(authToken);
+   console.log("Company result:", companyResult);
+   console.log("Company in store:", useCompanyStore.getState().company);
+   console.log("Company result:", companyResult);
+   console.log("Company in store:", useCompanyStore.getState().company); 
+
+  const { fetchSummary } = useEmissionStore.getState();
+  await fetchSummary(authToken);
+  console.log("scope1Results:", useEmissionStore.getState().scope1Results);
+   
+await fetchSummary(authToken).then((r) => {
+  console.log("Summary result:", r);
+  console.log("Full summary data:", JSON.stringify(r));
+  console.log("scope1Results:", useEmissionStore.getState().scope1Results);
+});
+
   };
+
+
+
 
   return (
     <div className="login-container">
@@ -71,6 +109,12 @@ export default function LoginPage() {
             <span>Trees: 124</span>
           </div>
         </div>
+
+        {error && (
+          <div style={{background:"#FEF2F2", border:"1px solid #FECACA", color:"#DC2626", padding:"12px 16px", borderRadius:"12px", fontSize:"14px", marginBottom:"16px"}}>
+            ⚠️ {error}
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
@@ -122,10 +166,10 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <PrimaryButton type="submit" className="login-button">
-            <span>Log In</span>
-            <FiArrowRight className="button-icon" />
-          </PrimaryButton>
+          <PrimaryButton type="submit" className="login-button" disabled={loading}>
+            <span>{loading ? "Logging in..." : "Log In"}</span>
+            {!loading && <FiArrowRight className="button-icon" />}
+           </PrimaryButton>
         </form>
 
         {/* Social Login */}

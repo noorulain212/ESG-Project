@@ -13,10 +13,24 @@ import {
   FiHelpCircle
 } from "react-icons/fi";
 import { BiLeaf } from "react-icons/bi";
+import { useAuthStore } from "../store/authStore";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar({ collapsed, onCollapse }) {
   const location = useLocation();
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  const { logout } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
+
+  const getInitials = () => {
+    const name = user?.displayName || user?.email || "U";
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
+  const displayEmail = user?.email || "";
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: <FiHome size={20} />, color: "#22C55E" },
@@ -33,13 +47,12 @@ function Sidebar({ collapsed, onCollapse }) {
 
   const isActive = (path) => location.pathname === path;
 
-  // Handle collapse toggle
-  const handleCollapse = () => {
-    onCollapse(!collapsed);
-  };
+  const handleCollapse = () => onCollapse(!collapsed);
 
-  // Determine width based on collapsed prop
-  const sidebarWidth = collapsed ? 80 : 260;
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <nav
@@ -59,13 +72,12 @@ function Sidebar({ collapsed, onCollapse }) {
         position: "relative",
       }}
     >
-      {/* Logo Area - now with proper top padding */}
+      {/* Logo Area */}
       <div style={{
         display: "flex",
         alignItems: "center",
         justifyContent: collapsed ? "center" : "flex-start",
         marginBottom: "32px",
-        paddingTop: "0", // Already have padding from parent
       }}>
         {!collapsed ? (
           <>
@@ -84,11 +96,7 @@ function Sidebar({ collapsed, onCollapse }) {
             }}>
               <BiLeaf size={20} />
             </div>
-            <span style={{
-              fontWeight: 700,
-              fontSize: "18px",
-              color: "#14532D",
-            }}>
+            <span style={{ fontWeight: 700, fontSize: "18px", color: "#14532D" }}>
               ESG-Calculator
             </span>
           </>
@@ -203,13 +211,9 @@ function Sidebar({ collapsed, onCollapse }) {
                       borderRadius: "0 4px 4px 0",
                     }} />
                   )}
-                  
-                  <span style={{
-                    color: isActive(item.path) ? "white" : item.color,
-                  }}>
+                  <span style={{ color: isActive(item.path) ? "white" : item.color }}>
                     {item.icon}
                   </span>
-                  
                   {!collapsed && <span>{item.label}</span>}
                 </button>
               </Link>
@@ -223,12 +227,7 @@ function Sidebar({ collapsed, onCollapse }) {
         borderTop: "1px solid rgba(34, 197, 94, 0.2)",
         paddingTop: "16px",
       }}>
-        <ul style={{ 
-          padding: 0, 
-          margin: 0, 
-          listStyle: "none",
-          marginBottom: "12px",
-        }}>
+        <ul style={{ padding: 0, margin: 0, listStyle: "none", marginBottom: "12px" }}>
           {bottomItems.map((item) => (
             <li key={item.path} style={{ marginBottom: "4px" }}>
               <Link to={item.path} style={{ textDecoration: "none" }}>
@@ -265,6 +264,7 @@ function Sidebar({ collapsed, onCollapse }) {
           {/* Logout Button */}
           <li>
             <button
+              onClick={handleLogout}
               onMouseEnter={() => setHoveredItem("logout")}
               onMouseLeave={() => setHoveredItem(null)}
               style={{
@@ -311,12 +311,30 @@ function Sidebar({ collapsed, onCollapse }) {
               color: "white",
               fontWeight: 600,
               fontSize: "14px",
+              flexShrink: 0,
             }}>
-              JD
+              {getInitials()}
             </div>
-            <div>
-              <div style={{ fontWeight: 500, fontSize: "13px", color: "#14532D" }}>John Doe</div>
-              <div style={{ fontSize: "11px", color: "#6B7280" }}>john@company.com</div>
+            <div style={{ overflow: "hidden" }}>
+              <div style={{ 
+                fontWeight: 500, 
+                fontSize: "13px", 
+                color: "#14532D",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {displayName}
+              </div>
+              <div style={{ 
+                fontSize: "11px", 
+                color: "#6B7280",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {displayEmail}
+              </div>
             </div>
           </div>
         )}

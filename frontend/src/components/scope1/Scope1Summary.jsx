@@ -1,7 +1,5 @@
 import React, { useEffect } from "react";
 import { useEmissionStore } from "../../store/emissionStore";
-import { EmissionCalculator } from "../../services/EmissionCalculator";
-import { UnitConverter } from "../../services/UnitConverter";
 import Card from "../ui/Card";
 
 export default function Scope1Summary() {
@@ -11,13 +9,17 @@ export default function Scope1Summary() {
   const fugitive = useEmissionStore((s) => s.scope1Fugitive);
 
   // Calculate totals using EmissionCalculator
-  const totals = EmissionCalculator.calculateScope1({
-    vehicles,
-    stationary,
-    refrigerants,
-    fugitive,
-    unitConverter: UnitConverter,
-  }) || {}; // fallback to empty object
+  const scope1Results = useEmissionStore((s) => s.scope1Results);
+  console.log("scope1Results:", scope1Results);
+
+// Use backend results if available, otherwise show 0
+const totals = scope1Results ? {
+  vehicles: scope1Results.mobile?.kgCO2e || 0,
+  stationary: scope1Results.stationary?.kgCO2e || 0,
+  refrigerants: scope1Results.refrigerants?.kgCO2e || 0,
+  fugitive: scope1Results.fugitive?.kgCO2e || 0,
+  co2e: scope1Results.total?.kgCO2e || 0,
+} : { vehicles: 0, stationary: 0, refrigerants: 0, fugitive: 0, co2e: 0 };
 
   // Check if any data exists
   const hasData = vehicles.length > 0 || stationary.length > 0 || refrigerants.length > 0 || fugitive.length > 0;
@@ -77,7 +79,21 @@ export default function Scope1Summary() {
             <p>Add entries in each category to see your Scope 1 totals</p>
           </div>
         ) : (
+          
           <>
+          {hasData && !scope1Results && (
+            <div style={{
+              margin: "16px 24px",
+              padding: "12px 16px",
+              background: "#FEF9C3",
+              borderRadius: "12px",
+              border: "1px solid #FDE047",
+              fontSize: "14px",
+              color: "#854D0E"
+            }}>
+              ⚠️ Click "Submit Scope 1" below to calculate your CO₂e emissions.
+            </div>
+          )}
             {/* Total Emissions Banner */}
             <div className="total-banner">
               <div className="total-label">Total CO₂e Emissions</div>
