@@ -15,6 +15,10 @@ setup_firestore_schema.py
 test_firestore.py
 get_token.py
 delete_factors.py
+restructure.py
+test_firebase.py
+upload_emission_factors.py
+
 # Python
 __pycache__/
 *.py[cod]
