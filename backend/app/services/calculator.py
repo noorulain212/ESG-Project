@@ -13,18 +13,22 @@ def get_emission_factors(region: str, country: str, city: str, scope: str) -> di
             db.collection("emissionFactors")
             .document("regions")
             .collection(region)
-            .document("metadata")
-            .collection("countries")
-            .document(country)
-            .collection("cities")
+            .document("countries")
+            .collection(country)
+            .document("cities")
+            .collection("city_data")
             .document(city)
             .collection(scope)
             .document("factors")
             .get()
         )
         if factors_doc.exists:
-            return factors_doc.to_dict()
-        return {}
+            data = factors_doc.to_dict()
+            print(f"🔍 Factors for {city}/{scope}:")
+            print(f"  Categories: {list(data.keys())}")
+            if "mobile" in data:
+                print(f"  Mobile keys: {list(data['mobile'].keys())}")
+            return data
     except Exception as e:
         print(f"❌ Error fetching factors: {e}")
         return {}
@@ -62,7 +66,12 @@ def calculate_scope1(data: dict, region: str, country: str, city: str) -> dict:
     for entry in data.get("mobile", []):
         fuel_type = entry.get("fuelType", "")
         distance_km = float(entry.get("distanceKm", 0))
+        print(f"🔍 Looking for mobile factors. Keys in factors['mobile']: {list(factors.get('mobile', {}).keys())}")
+        print(f"🔍 Looking for fuel_type: '{fuel_type}'")
+        
+
         factor_data = factors.get("mobile", {}).get(fuel_type, {})
+        print(f"🔍 Found factor_data: {factor_data}")
         factor_value = float(factor_data.get("value", 0))
         kg_co2e = distance_km * factor_value
         mobile_total += kg_co2e
@@ -100,7 +109,12 @@ def calculate_scope1(data: dict, region: str, country: str, city: str) -> dict:
     for entry in data.get("refrigerants", []):
         refrigerant_type = entry.get("refrigerantType", "")
         leakage_kg = float(entry.get("leakageKg", 0))
+        print(f"🔍 Looking for refrigerant: '{refrigerant_type}'")
+        print(f"🔍 Fugitive keys in factors: {list(factors.get('fugitive', {}).keys())}")
+        
         factor_data = factors.get("fugitive", {}).get(refrigerant_type, {})
+        print(f"🔍 Found factor_data: {factor_data}")
+        
         factor_value = float(factor_data.get("value", 0))
         kg_co2e = leakage_kg * factor_value
         refrigerant_total += kg_co2e
@@ -110,6 +124,7 @@ def calculate_scope1(data: dict, region: str, country: str, city: str) -> dict:
             "unit": factor_data.get("unit", ""),
             "kgCO2e": round(kg_co2e, 4),
         })
+
     results["refrigerants"] = {"entries": refrigerant_entries, "totalKgCO2e": round(refrigerant_total, 4)}
     grand_total += refrigerant_total
 
@@ -149,6 +164,7 @@ def calculate_scope2(data: dict, region: str, country: str, city: str) -> dict:
         "renewables": [{"sourceType": "solar_ppa", "generationKwh": 5000}, ...]
     }
     """
+    print(f"🔍 Scope2 data received: {data}")  
     factors = get_emission_factors(region, country, city, "scope2")
     results = {}
     grand_total = 0.0
@@ -161,9 +177,9 @@ def calculate_scope2(data: dict, region: str, country: str, city: str) -> dict:
         # Use market-based if REC/PPA, otherwise location-based grid average
         method = entry.get("method", "location")
         if method == "market" and entry.get("certificateType"):
-            factor_key = entry.get("certificateType", "recPpa")
+            factor_key = entry.get("certificateType", "rec_ppa")
         else:
-            factor_key = "gridAverage"
+            factor_key = "grid_average"  
         factor_data = factors.get("electricity", {}).get(factor_key, {})
         factor_value = float(factor_data.get("value", 0))
         kg_co2e = consumption_kwh * factor_value
@@ -183,6 +199,8 @@ def calculate_scope2(data: dict, region: str, country: str, city: str) -> dict:
     for entry in data.get("heating", []):
         energy_type = entry.get("energyType", "")
         consumption_kwh = float(entry.get("consumptionKwh", 0))
+        print(f"🔍 Heating energy_type received: '{energy_type}'")
+        print(f"🔍 Heating keys in Firestore: {list(factors.get('heating', {}).keys())}")
         factor_data = factors.get("heating", {}).get(energy_type, {})
         factor_value = float(factor_data.get("value", 0))
         kg_co2e = consumption_kwh * factor_value
